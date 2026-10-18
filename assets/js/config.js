@@ -8,4 +8,4 @@
  *   4. Copy the Client ID (ends in .apps.googleusercontent.com) and paste it below.
  * A client ID is public by design, so it is safe to commit. Leave it empty to hide the Google button.
  */
-export const GOOGLE_CLIENT_ID = '';
+export const GOOGLE_CLIENT_ID = '545190323583-mqjtau78s410veops03do4pdp16s0p3h.apps.googleusercontent.com';
