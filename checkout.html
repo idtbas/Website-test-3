@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Secure checkout — Silver Shop</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <link rel="stylesheet" href="assets/css/pages.css">
+</head>
+<body class="co-body">
+<header class="co-header">
+  <div class="wrap">
+    <a class="logo" href="index.html" aria-label="Silver Shop — home"><i class="logo-mark" aria-hidden="true"></i><span class="logo-word">Silver <span>shop</span></span></a>
+    <div class="flex center gap-16">
+      <span class="co-secure"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg> Secure checkout</span>
+    </div>
+  </div>
+</header>
+<div id="co-root"></div>
+<div class="processing" id="processing" aria-live="assertive">
+  <div class="inner">
+    <div class="loader-ring"></div>
+    <h2 class="display h3" style="margin:0">Processing your order…</h2>
+    <ul class="proc-steps" id="proc-steps">
+      <li><span class="s"></span>Encrypting payment details</li>
+      <li><span class="s"></span>Authorizing with your bank</li>
+      <li><span class="s"></span>Reserving your pieces</li>
+      <li><span class="s"></span>Confirming your order</li>
+    </ul>
+    <p class="muted" style="font-size:12px;margin:0">Demo store — no real payment is taken.</p>
+  </div>
+</div>
+<script type="module" src="assets/js/checkout.js"></script>
+</body>
+</html>
