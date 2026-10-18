@@ -20,4 +20,4 @@ export const GOOGLE_CLIENT_ID = '545190323583-mqjtau78s410veops03do4pdp16s0p3h.a
  *   4. Account → General → copy the Public Key.
  * Leave these empty and emails still appear in each customer's account under "Mailbox".
  */
-export const EMAILJS = { publicKey: '', serviceId: '', templateId: '' };
+export const EMAILJS = { publicKey: '8rO1W8ZyADYOadTHf', serviceId: 'service_mizzsgi', templateId: 'template_fai8v6b' };
