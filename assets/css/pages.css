@@ -225,7 +225,7 @@
 .stage.is-3d .viewer { opacity: 1; pointer-events: auto; }
 .stage.is-3d > img { opacity: 0; }
 .stage-badges { position: absolute; top: 16px; left: 16px; z-index: 2; display: flex; gap: 6px; }
-.stage-hint { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 2; display: flex; gap: 8px; align-items: center; padding: 8px 14px; border-radius: 99px; background: rgba(255,255,255,.8); backdrop-filter: blur(8px); font-size: 12px; font-weight: 500; box-shadow: var(--shadow-1); transition: opacity .4s; white-space: nowrap; }
+.stage-hint { position: absolute; left: 16px; bottom: 16px; z-index: 2; display: flex; gap: 8px; align-items: center; padding: 8px 14px; border-radius: 99px; background: rgba(255,255,255,.8); backdrop-filter: blur(8px); font-size: 12px; font-weight: 500; box-shadow: var(--shadow-1); transition: opacity .4s; white-space: nowrap; }
 .stage-hint svg { width: 16px; height: 16px; }
 .btn-3d { position: absolute; right: 16px; top: 16px; z-index: 2; }
 .viewers-pill { position: absolute; right: 16px; bottom: 16px; z-index: 2; display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 99px; background: var(--ink); color: #fff; font-size: 12px; }
@@ -271,7 +271,10 @@
 .fbt-items { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .fbt-item { width: 180px; display: grid; gap: 8px; font-size: 13px; position: relative; }
 .fbt-item .thumb { width: 100%; height: 180px; }
-.fbt-item .check { position: absolute; top: 10px; left: 10px; }
+.fbt-item .check { position: absolute; top: 10px; left: 10px; z-index: 1; }
+.fbt-item .check .box { background: #fff; }
+.fbt-item .check input:checked + .box { background: var(--ink); }
+.fbt-item .check input:disabled + .box { opacity: .6; }
 .fbt-item.is-off { opacity: .4; }
 .fbt-plus { font: 300 34px/1 var(--sans); color: var(--muted-2); }
 .fbt-sum { display: grid; gap: 12px; }
@@ -483,7 +486,7 @@
 @keyframes sealIn { from { transform: scale(.4) rotate(-90deg); opacity: 0; } }
 @keyframes draw { to { stroke-dashoffset: 0; } }
 .confirm-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 28px; align-items: start; }
-.box { border: 1px solid var(--line); border-radius: 20px; padding: 28px; display: grid; gap: 18px; }
+.cbox { border: 1px solid var(--line); border-radius: 20px; padding: 28px; display: grid; gap: 18px; }
 .timeline { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
 .timeline li { display: grid; grid-template-columns: 28px 1fr auto; gap: 14px; padding-bottom: 22px; position: relative; font-size: 14px; }
 .timeline li::before { content: ''; position: absolute; left: 13px; top: 26px; bottom: 0; width: 2px; background: var(--line); }

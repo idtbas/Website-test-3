@@ -59,7 +59,7 @@ export function createStudioEnvironment(renderer) {
 export const FINISHES = {
   polished: { label: 'Mirror Polished', color: 0xf1f1f3, roughness: 0.06 },
   brushed: { label: 'Satin Brushed', color: 0xe6e6e9, roughness: 0.3 },
-  oxidized: { label: 'Oxidized', color: 0x77777d, roughness: 0.24 },
+  oxidized: { label: 'Oxidized', color: 0x93939a, roughness: 0.3 },
 };
 
 export function silver(finish = 'polished', extra = {}) {

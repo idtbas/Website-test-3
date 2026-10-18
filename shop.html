@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shop all — Silver Shop</title>
+  <meta name="description" content="Shop 925 sterling silver rings, necklaces, earrings, bracelets, bullion and home silver.">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <link rel="stylesheet" href="assets/css/pages.css">
+</head>
+<body>
+<main id="main" class="wrap">
+  <nav class="crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a><span aria-hidden="true">/</span><a href="shop.html">Shop</a><span aria-hidden="true" id="crumb-sep" class="hide">/</span><span id="crumb-cat"></span></nav>
+  <header class="shop-hero">
+    <div>
+      <p class="eyebrow" id="shop-eyebrow">The collection</p>
+      <h1 class="display h1" id="shop-title">Shop all</h1>
+      <p class="lead" id="shop-blurb">Every piece in 925 sterling silver, finished by hand and guaranteed for life.</p>
+    </div>
+    <div class="flex gap-8 wrap-f" id="cat-pills"></div>
+  </header>
+
+  <div class="shop-layout">
+    <aside class="filters" id="filters" aria-label="Filters">
+      <div class="flex between center" style="padding-bottom:16px">
+        <strong style="font-size:13px;letter-spacing:.16em;text-transform:uppercase">Filter</strong>
+        <button class="muted" style="font-size:12px;text-decoration:underline;text-underline-offset:3px" id="clear-all">Clear all</button>
+      </div>
+      <div class="fgroup"><h4>Category</h4><div id="f-cat"></div></div>
+      <div class="fgroup"><h4>Price</h4>
+        <div class="range"><span class="track"></span><span class="fill" id="r-fill"></span><input type="range" id="r-min" min="0" max="200" step="5" value="0" aria-label="Minimum price"><input type="range" id="r-max" min="0" max="200" step="5" value="200" aria-label="Maximum price"></div>
+        <div class="range-vals"><span id="r-min-v">$0</span><span id="r-max-v">$200+</span></div>
+      </div>
+      <div class="fgroup"><h4>Finish</h4><div id="f-finish"></div></div>
+      <div class="fgroup"><h4>Rating</h4><div id="f-rating"></div></div>
+      <div class="fgroup"><h4>Availability</h4><div id="f-avail"></div></div>
+      <div class="fgroup" style="border-bottom:1px solid var(--line)">
+        <div class="stack-hint" style="margin:0"><span class="chip-silver">%</span><span><b>Stack &amp; Save</b> — 10% off 2 pieces, 15% off 3+. Applied automatically.</span></div>
+      </div>
+      <button class="btn btn-ink btn-block mt-16 filter-toggle" id="apply-mobile">Show results</button>
+    </aside>
+
+    <section aria-label="Products">
+      <div class="toolbar">
+        <div class="flex center gap-12">
+          <button class="btn btn-ghost btn-sm filter-toggle" id="open-filters">Filters</button>
+          <span class="muted" style="font-size:13px" id="count" aria-live="polite"></span>
+        </div>
+        <div class="flex center gap-12">
+          <label class="sr-only" for="sort">Sort by</label>
+          <select id="sort">
+            <option value="featured">Featured</option>
+            <option value="best">Best selling</option>
+            <option value="new">New arrivals</option>
+            <option value="price-asc">Price: low to high</option>
+            <option value="price-desc">Price: high to low</option>
+            <option value="rating">Top rated</option>
+            <option value="discount">Biggest savings</option>
+          </select>
+          <div class="density" role="group" aria-label="Grid density">
+            <button data-cols="2" aria-label="2 columns"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="6" height="14" rx="1.5"/><rect x="9" y="1" width="6" height="14" rx="1.5"/></svg></button>
+            <button data-cols="3" class="is-active" aria-label="3 columns"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><rect x="0.5" y="1" width="4" height="14" rx="1"/><rect x="6" y="1" width="4" height="14" rx="1"/><rect x="11.5" y="1" width="4" height="14" rx="1"/></svg></button>
+            <button data-cols="4" aria-label="4 columns"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><rect x="0" y="1" width="3" height="14" rx="1"/><rect x="4.3" y="1" width="3" height="14" rx="1"/><rect x="8.6" y="1" width="3" height="14" rx="1"/><rect x="13" y="1" width="3" height="14" rx="1"/></svg></button>
+          </div>
+        </div>
+      </div>
+      <div class="active-chips" id="chips"></div>
+      <div class="product-grid" id="grid"></div>
+    </section>
+  </div>
+</main>
+<script type="module" src="assets/js/shop.js"></script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Silver Shop</title>
+  <meta name="description" content="Hand-finished 925 sterling silver.">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <link rel="stylesheet" href="assets/css/pages.css">
+  <script type="importmap">{ "imports": { "three": "./assets/vendor/three/three.module.min.js" } }</script>
+</head>
+<body>
+<main id="main">
+  <div class="wrap">
+    <nav class="crumbs" aria-label="Breadcrumb" id="crumbs"></nav>
+    <div class="pdp" id="pdp"></div>
+  </div>
+
+  <section class="section" style="padding-top:20px" id="fbt-wrap">
+    <div class="wrap">
+      <div class="section-head"><h2 class="display h2 reveal">Complete the <em class="serif-i">set</em></h2><p class="lead reveal">Bought together by 3 in 5 customers. Stack &amp; Save applies automatically — up to 15% off.</p></div>
+      <div class="fbt" id="fbt"></div>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:0" id="reviews">
+    <div class="wrap">
+      <div class="section-head"><h2 class="display h2 reveal">Reviews</h2><button class="btn btn-ghost" id="write-review">Write a review</button></div>
+      <div class="reviews">
+        <aside class="rsummary" id="rsummary"></aside>
+        <div><div class="flex gap-8 wrap-f" id="rfilters" style="margin-bottom:12px"></div><div class="rlist" id="rlist"></div><div style="text-align:center;margin-top:28px"><button class="btn btn-silver" id="more-reviews">Load more reviews</button></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:0">
+    <div class="wrap">
+      <div class="section-head"><h2 class="display h2 reveal">You may also <em class="serif-i">love</em></h2><a class="btn-link" href="shop.html">Shop all <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
+      <div class="grid grid-4" id="related"></div>
+    </div>
+  </section>
+
+  <section class="section hide" style="padding-top:0" id="recent-wrap">
+    <div class="wrap">
+      <div class="section-head"><h2 class="display h3">Recently viewed</h2></div>
+      <div class="rail" id="recent"></div>
+    </div>
+  </section>
+</main>
+
+<div class="sticky-buy" id="sticky-buy" aria-hidden="true"><div class="wrap">
+  <img id="sb-img" alt="">
+  <div class="meta"><strong id="sb-name"></strong><span id="sb-opts"></span></div>
+  <span class="price" id="sb-price" style="font-size:18px"></span>
+  <button class="btn btn-ink" id="sb-add">Add to bag</button>
+</div></div>
+
+<script type="module" src="assets/js/product.js"></script>
+</body>
+</html>

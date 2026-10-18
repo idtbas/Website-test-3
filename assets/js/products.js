@@ -216,7 +216,7 @@ export function reviewsFor(p, count = 8) {
     const days = Math.floor(r() * 120) + 1 + i * 3;
     return {
       name: NAMES[Math.floor(r() * NAMES.length)], city: CITIES[Math.floor(r() * CITIES.length)],
-      stars, title: TITLES[Math.floor(r() * TITLES.length)], body: BODIES[Math.floor(r() * BODIES.length)],
+      stars, title: stars === 3 ? 'Beautiful, but smaller than I imagined' : TITLES[Math.floor(r() * TITLES.length)], body: stars === 3 ? 'The quality is lovely and the polish is perfect, it just reads a little more delicate in person than in the photos. Keeping it anyway.' : BODIES[Math.floor(r() * BODIES.length)],
       date: new Date(Date.now() - days * 864e5), helpful: Math.floor(r() * 60), verified: r() < 0.92,
       photo: r() < 0.3 ? img(p.id, 1 + Math.floor(r() * 3)) : null,
       size: p.options?.size ? (r() < 0.6 ? 'True to size' : 'Runs slightly small') : null,
