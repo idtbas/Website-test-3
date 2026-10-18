@@ -2,7 +2,17 @@
 
 A demo storefront for sterling silver jewelry, bullion and homeware, styled black on white with 3D silver effects. Everything is fictional: products, prices, reviews and stock. **No real orders or payments are processed.**
 
-## Run it
+## Live site (GitHub Pages)
+
+The site is plain static files with relative paths, so GitHub Pages serves it as-is. There is no build step, and `.nojekyll` tells Pages to skip Jekyll.
+
+To publish: open the repository's **Settings → Pages**. Under *Build and deployment*, set **Source** to *Deploy from a branch*, choose the branch `claude/silver-shop-website-wm8xpn` and the folder `/ (root)`, then click **Save**. After about a minute the site is live at:
+
+**https://idtbas.github.io/Website-test-3/**
+
+Every push to that branch redeploys automatically. `404.html` handles mistyped links.
+
+## Run it locally
 
 It's a static site with no build step. Serve the folder with any static server:
 

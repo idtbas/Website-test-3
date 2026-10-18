@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Page not found — Silver Shop</title>
+  <meta name="robots" content="noindex">
+  <style>
+    :root { --ink: #0a0a0b; --muted: #6b6b72; --paper: #ffffff; }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body { background: var(--paper); color: var(--ink); font: 400 16px/1.6 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; display: grid; place-items: center; padding: 24px max(16px, env(safe-area-inset-left, 0px)); text-align: center; }
+    main { display: grid; gap: 18px; justify-items: center; max-width: 520px; }
+    .ring { width: 120px; height: 120px; border-radius: 50%; background: conic-gradient(from 210deg, #8c8c92, #ffffff, #a2a2a8, #f2f2f4, #7d7d83, #e6e6ea, #8c8c92); box-shadow: inset 0 2px 3px rgba(255,255,255,.9), inset 0 -3px 5px rgba(0,0,0,.25), 0 24px 40px -18px rgba(0,0,0,.45); position: relative; animation: spin 12s linear infinite; }
+    .ring::after { content: ''; position: absolute; inset: 22px; border-radius: 50%; background: var(--paper); box-shadow: inset 0 3px 6px rgba(0,0,0,.28); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .ring { animation: none; } }
+    h1 { margin: 8px 0 0; font: 400 clamp(40px, 9vw, 64px)/1 'Cormorant Garamond', Georgia, serif; letter-spacing: -0.02em; }
+    p { margin: 0; color: var(--muted); }
+    a { display: inline-flex; align-items: center; height: 52px; padding: 0 28px; border-radius: 999px; background: var(--ink); color: #fff; text-decoration: none; font: 600 13px/1 system-ui, sans-serif; letter-spacing: .12em; text-transform: uppercase; }
+    a:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="ring" aria-hidden="true"></div>
+    <h1>This piece has moved.</h1>
+    <p>The page you’re looking for isn’t here, but everything else in the collection is.</p>
+    <a id="home" href="./">Back to Silver Shop</a>
+  </main>
+  <script>
+    // GitHub Pages serves this file for any missing path, so link back to the site root (the repo folder on *.github.io).
+    var seg = location.pathname.split('/')[1];
+    document.getElementById('home').href = location.hostname.endsWith('github.io') && seg ? '/' + seg + '/' : '/';
+  </script>
+</body>
+</html>
