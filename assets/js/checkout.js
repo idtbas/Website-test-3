@@ -1,5 +1,5 @@
 /* Silver Shop — checkout. Demo only: no payment data leaves the browser and nothing is charged. */
-import { boot, $, $$, money2, esc, cart, TAX, ICONS, checkSvg, fmtDate, confetti, toast, store, session, account, POINT_VALUE, WELCOME_POINTS, FREE_GIFT, dispatchDate, rewardMeter, gapFillHtml, optsText, mountGoogleButton, googleEnabled } from './app.js';
+import { boot, $, $$, money2, esc, cart, TAX, ICONS, checkSvg, fmtDate, confetti, toast, store, session, account, POINT_VALUE, WELCOME_POINTS, FREE_GIFT, dispatchDate, rewardMeter, gapFillHtml, optsText, mountGoogleButton, googleEnabled, notify, mailEnabled } from './app.js';
 import { byId, img } from './products.js';
 
 boot({ chrome: false });
@@ -592,6 +592,7 @@ async function placeOrder() {
     order.member = true;
   }
   store.set('lastOrder', order);
+  notify('order', data.email, order);
   cart.clear();
   ['data', 'step', 'max', 'reserve'].forEach((k) => { try { sessionStorage.removeItem('co:' + k); } catch { /* ignore */ } });
   ov.classList.remove('is-on');
@@ -615,7 +616,7 @@ function confirmation(o) {
       <div class="seal"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></span></div>
       <p class="eyebrow">Order ${o.no}</p>
       <h1 class="display h1" style="font-size:clamp(44px,6vw,84px)">Thank you, <em class="serif-i">${esc(d.first || 'friend')}.</em></h1>
-      <p class="lead" style="text-align:center">Your order is confirmed. A receipt is on its way to <b style="color:var(--ink)">${esc(d.email)}</b>. Our atelier is already hand-finishing your pieces.</p>
+      <p class="lead" style="text-align:center">Your order is confirmed. ${mailEnabled() ? 'A receipt is on its way to' : 'Your receipt is saved for'} <b style="color:var(--ink)">${esc(d.email)}</b>${!mailEnabled() && u ? ' in your account Mailbox' : ''}. Our atelier is already hand-finishing your pieces.</p>
       ${o.totals.savings > 0 ? `<span class="tag tag-silver" style="height:32px;font-size:11px;padding:0 16px">You saved ${money2(o.totals.savings)} today</span>` : ''}
     </div>
     <div class="confirm-grid">
@@ -671,6 +672,7 @@ function confirmation(o) {
       if (o.member && account.user) { const i = account.user.orders.findIndex((x) => x.no === o.no); if (i > -1) account.user.orders[i] = o; account.addPoints(Math.floor(offerPrice), `Earned on ${o.no}`); }
       $('#conf-items').insertAdjacentHTML('beforeend', `<div class="sum-item" style="animation:itemIn .6s var(--ease-out)"><div class="thumb"><img src="${img(offer.id)}" alt=""><span class="q">1</span></div><div><b>${esc(offer.name)}</b><small>Added after checkout · 25% off</small></div><b>${money2(offerPrice)}</b></div>`);
       $('#conf-total').textContent = money2(o.totals.total);
+      notify('orderUpdate', d.email, { o, item: offer.name, price: offerPrice }, { quiet: true });
       b.innerHTML = `${ICONS.check} Added to order ${o.no}`;
       confetti({ count: 80, x: 0.3, y: 0.6 });
       toast({ img: img(offer.id), html: `<strong>${esc(offer.name)}</strong> added to your order`, sub: `Charged ${money2(offerPrice)} + tax to ${o.pay.replace(/<[^>]+>/g, ' ')} (demo)` });

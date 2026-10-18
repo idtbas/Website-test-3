@@ -9,3 +9,15 @@
  * A client ID is public by design, so it is safe to commit. Leave it empty to hide the Google button.
  */
 export const GOOGLE_CLIENT_ID = '545190323583-mqjtau78s410veops03do4pdp16s0p3h.apps.googleusercontent.com';
+
+/* EMAILJS turns on real emails (order confirmations, welcome, sign-in alerts…). Free: 200 emails a month.
+ *   1. https://www.emailjs.com → Sign up.
+ *   2. Email Services → Add New Service → Gmail → Connect Account → Create Service. Copy the Service ID.
+ *   3. Email Templates → Create New Template:
+ *        Subject: {{subject}}      To Email: {{to_email}}      From Name: {{from_name}}
+ *        Content: open the code editor (<>) and replace everything with {{{html}}}   (three braces)
+ *      Save, then copy the Template ID.
+ *   4. Account → General → copy the Public Key.
+ * Leave these empty and emails still appear in each customer's account under "Mailbox".
+ */
+export const EMAILJS = { publicKey: '', serviceId: '', templateId: '' };

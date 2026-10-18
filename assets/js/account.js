@@ -1,11 +1,12 @@
 /* Silver Club — sign up, sign in and the member dashboard. Demo: accounts live in this browser only. */
-import { boot, $, $$, esc, money, money2, account, ICONS, toast, confetti, cart, productCard, bindTilt, wishlist, store, session, POINT_VALUE, WELCOME_POINTS, TIERS, fmtDate, checkSvg, reveal, optsText, dispatchDate, TAX, openDrawer, mountGoogleButton, googleEnabled } from './app.js';
+import { boot, $, $$, esc, money, money2, account, ICONS, toast, confetti, cart, productCard, bindTilt, wishlist, store, session, POINT_VALUE, WELCOME_POINTS, TIERS, fmtDate, checkSvg, reveal, optsText, dispatchDate, TAX, openDrawer, mountGoogleButton, googleEnabled, notify, mailEnabled, openModal } from './app.js';
+import { mailbox } from './mailer.js';
 import { PRODUCTS, byId, img } from './products.js';
 
 boot();
 const root = $('#acct-root');
 let mode = ['signin', 'reset'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'join';
-let tab = ['orders', 'saved', 'addresses', 'profile'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'overview';
+let tab = ['orders', 'saved', 'mailbox', 'addresses', 'profile'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'overview';
 
 const field = (id, label, { type = 'text', value = '', ac = '', req = true, extra = '', hint = '' } = {}) =>
   `<div class="field" data-field="${id}"><input id="${id}" name="${id}" type="${type}" placeholder=" " value="${esc(value)}" ${ac ? `autocomplete="${ac}"` : ''} ${req ? 'required' : ''} ${extra}><label for="${id}">${label}</label>${hint ? `<span class="hint-sm">${hint}</span>` : ''}<span class="err" role="alert"></span></div>`;
@@ -146,7 +147,7 @@ function renderDash() {
       </div>
     </div>
     <nav class="dash-tabs" role="tablist" aria-label="Account sections">
-      ${[['overview', 'Overview'], ['orders', `Orders${u.orders.length ? ` (${u.orders.length})` : ''}`], ['saved', `Saved${wishlist.ids.size ? ` (${wishlist.ids.size})` : ''}`], ['addresses', 'Addresses'], ['profile', 'Profile']].map(([k, l]) => `<button role="tab" data-tab="${k}" aria-selected="${tab === k}">${l}</button>`).join('')}
+      ${[['overview', 'Overview'], ['orders', `Orders${u.orders.length ? ` (${u.orders.length})` : ''}`], ['saved', `Saved${wishlist.ids.size ? ` (${wishlist.ids.size})` : ''}`], ['mailbox', `Mailbox${unread(u) ? ` (${unread(u)})` : ''}`], ['addresses', 'Addresses'], ['profile', 'Profile']].map(([k, l]) => `<button role="tab" data-tab="${k}" aria-selected="${tab === k}">${l}</button>`).join('')}
     </nav>
     <div id="dash-panel" class="dash-panel"></div>
   </section>`;
@@ -205,7 +206,33 @@ function renderPanel() {
   }
   if (tab === 'addresses') renderAddresses();
   if (tab === 'profile') renderProfile();
+  if (tab === 'mailbox') renderMailbox();
   bindTilt(p); reveal(p);
+}
+
+/* Mailbox: every email the store sent this member (also how emails work before EmailJS is connected) */
+const unread = (u) => mailbox(u.email).filter((m) => m.at > (u.mailSeen || 0)).length;
+const MAIL_ICON = { welcome: ICONS.gift, signin: ICONS.lock, password: ICONS.lock, order: ICONS.box, orderUpdate: ICONS.box, shipped: ICONS.truck, newsletter: ICONS.sparkle, contact: ICONS.mail };
+const STATUS = { sent: 'Sent', sending: 'Sending…', failed: 'Not delivered', preview: 'Preview' };
+function renderMailbox() {
+  const u = account.user, p = $('#dash-panel');
+  const list = mailbox(u.email);
+  p.innerHTML = `${mailEnabled() ? '' : '<p class="mail-note">' + ICONS.mail + '<span>Emails appear here as previews. Once email sending is connected, the same messages also go to your inbox.</span></p>'}
+    ${list.length ? `<div class="mail-list">${list.map((m) => `<button class="mail-row ${m.at > (u.mailSeen || 0) ? 'is-new' : ''}" data-mail="${m.id}"><span class="mail-ico">${MAIL_ICON[m.type] || ICONS.mail}</span><span class="mail-main"><b>${esc(m.subject)}</b><small>Silver Shop · ${fmtDate(m.at, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</small></span><span class="mail-status s-${m.status}">${STATUS[m.status] || ''}</span></button>`).join('')}</div>`
+      : `<div class="empty">${ICONS.mail.replace('<svg', '<svg width="44" height="44"')}<h3 class="display h3">No emails yet</h3><p class="muted">Order confirmations, shipping updates and account alerts will show up here.</p></div>`}`;
+  if (unread(u)) setTimeout(() => { account.update({ mailSeen: Date.now() }); }, 1500);
+}
+function openMail(id) {
+  const m = mailbox(account.user.email).find((x) => x.id === id); if (!m) return;
+  openModal(`<div class="mail-view"><div class="mail-view-head"><p class="eyebrow">To ${esc(m.to)} · ${fmtDate(m.at, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</p><h2 class="display h3">${esc(m.subject)}</h2></div><iframe class="mail-frame" title="${esc(m.subject)}" sandbox="allow-popups allow-popups-to-escape-sandbox" referrerpolicy="no-referrer"></iframe></div>`, 'mail-modal sheet');
+  const f = $('.mail-frame'); f.srcdoc = m.html.replace('<head>', '<head><base target="_blank">');
+}
+/* Simulated courier: once an order has left the atelier, send its shipping email (once). */
+function shipNotices() {
+  const u = account.user; if (!u) return;
+  let changed = false;
+  u.orders.forEach((o) => { if (!o.mailedShipped && orderStatus(o).key !== 'finishing') { o.mailedShipped = true; changed = true; notify('shipped', u.email, o, { quiet: true }).then(() => { if (tab === 'mailbox' && account.user) renderMailbox(); }); } });
+  if (changed) account.update({});
 }
 
 /* Addresses */
@@ -256,6 +283,7 @@ root.addEventListener('click', async (e) => {
   if (pw) { const i = $('#' + pw.dataset.pw); const show = i.type === 'password'; i.type = show ? 'text' : 'password'; pw.textContent = show ? 'Hide' : 'Show'; pw.setAttribute('aria-label', show ? 'Hide password' : 'Show password'); }
   const tb = e.target.closest('[data-tab]');
   if (tb && account.user) { tab = tb.dataset.tab; editing = null; history.replaceState(null, '', tab === 'overview' ? location.pathname : '#' + tab); renderPanel(); if (tb.closest('.cbox')) $('.dash-tabs').scrollIntoView({ behavior: 'smooth' }); }
+  const mr = e.target.closest('[data-mail]'); if (mr) openMail(mr.dataset.mail);
   if (e.target.closest('[data-logout]')) { account.logout(); toast({ icon: ICONS.logout, html: 'You’ve been signed out.', dark: true, timeout: 2600 }); mode = 'signin'; render(); }
   const tg = e.target.closest('[data-toggle-order]'); if (tg && tab === 'orders') tg.parentElement.classList.toggle('is-open');
   const ro = e.target.closest('[data-reorder]');
@@ -359,5 +387,5 @@ root.addEventListener('submit', async (e) => {
   }
 });
 
-function render() { account.user ? renderDash() : renderAuth(); }
+function render() { if (account.user) { shipNotices(); renderDash(); } else renderAuth(); }
 render();

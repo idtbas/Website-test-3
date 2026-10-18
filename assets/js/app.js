@@ -1,6 +1,7 @@
 /* Silver Shop — shared storefront engine: state, pricing, accounts, chrome (header/footer/drawer), and UI effects. */
 import { PRODUCTS, CATEGORIES, byId, img, CITIES } from './products.js';
 import { GOOGLE_CLIENT_ID } from './config.js';
+import { sendMail, deviceName, mailEnabled } from './mailer.js';
 
 /* ------------------------------------------------------------------ */
 /* Utilities                                                           */
@@ -221,6 +222,7 @@ export const account = {
     const salt = crypto.getRandomValues ? [...crypto.getRandomValues(new Uint8Array(8))].map((b) => b.toString(16)).join('') : String(Math.random());
     this.users[key] = { first: first.trim(), last: last.trim(), email: key, salt, pw: await hashPw(password, salt), birthday, news, phone, created: Date.now(), points: WELCOME_POINTS, lifetime: 0, orders: [], addresses: [], history: [{ at: Date.now(), pts: WELCOME_POINTS, note: 'Welcome to the Silver Club' }] };
     this.session = key; this.save();
+    notify('welcome', key, { first: first.trim() });
     return { ok: true };
   },
   async login(email, password) {
@@ -229,10 +231,18 @@ export const account = {
     if (!u.pw) return { ok: false, field: 'password', msg: 'This account signs in with Google. Use “Continue with Google” above.' };
     if (u.pw !== await hashPw(password, u.salt)) return { ok: false, field: 'password', msg: 'That password doesn’t match. Try again or reset it.' };
     this.session = u.email; this.save();
+    notify('signin', u.email, { first: u.first, method: 'Email and password', when: nowText(), device: deviceName() }, { quiet: true });
     return { ok: true };
   },
   async checkPassword(pw) { const u = this.user; return !!u && !!u.pw && u.pw === await hashPw(pw, u.salt); },
-  async setPassword(pw, email = this.session) { const u = this.users[norm(email)]; if (!u) return false; if (!u.salt) u.salt = [...crypto.getRandomValues(new Uint8Array(8))].map((b) => b.toString(16)).join(''); u.pw = await hashPw(pw, u.salt); this.save(); return true; },
+  async setPassword(pw, email = this.session) {
+    const u = this.users[norm(email)]; if (!u) return false;
+    const added = !u.pw;
+    if (!u.salt) u.salt = [...crypto.getRandomValues(new Uint8Array(8))].map((b) => b.toString(16)).join('');
+    u.pw = await hashPw(pw, u.salt); this.save();
+    notify('password', u.email, { first: u.first, added, when: nowText(), device: deviceName() }, { quiet: true });
+    return true;
+  },
   logout() { this.session = null; this.save(); try { window.google?.accounts.id.disableAutoSelect(); } catch { /* not loaded */ } },
   /** Sign in (or sign up) with a Google ID token. Returns { ok, created }. */
   googleSignIn(credential) {
@@ -250,6 +260,8 @@ export const account = {
     }
     Object.assign(this.users[key], { google: true, picture: c.picture || '' });
     this.session = key; this.save();
+    if (created) notify('welcome', key, { first: this.users[key].first, google: true });
+    else notify('signin', key, { first: this.users[key].first, method: 'Google', when: nowText(), device: deviceName() }, { quiet: true });
     return { ok: true, created };
   },
   update(fields) {
@@ -268,6 +280,15 @@ export const account = {
   addPoints(pts, note) { const u = this.user; if (!u || !pts) return; u.points = Math.max(0, u.points + pts); if (pts > 0) u.lifetime += pts; u.history.unshift({ at: Date.now(), pts, note }); this.save(); },
   initials(u = this.user) { return u ? ((u.first[0] || '') + (u.last[0] || '')).toUpperCase() : ''; },
 };
+
+/* Emails: build + send (when EmailJS is set up) + keep a copy in the customer's mailbox. */
+export const nowText = () => new Date().toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+export { mailEnabled };
+export async function notify(type, to, data, { quiet = false } = {}) {
+  const m = await sendMail(type, to, data);
+  if (m && m.status === 'sent' && !quiet) toast({ icon: ICONS.mail, html: `Email sent to <strong>${esc(m.to)}</strong>`, sub: esc(m.subject), timeout: 3600 });
+  return m;
+}
 
 /* "Continue with Google": Google Identity Services, loaded only when a client ID is configured. */
 export const googleEnabled = () => !!GOOGLE_CLIENT_ID;
@@ -912,7 +933,7 @@ function leadModal() {
     <div class="code-reveal" id="code-reveal"><span>WELCOME15</span><button class="btn btn-ink btn-sm" data-apply-code="WELCOME15">Apply</button></div>
     <a class="lead-alt" href="account.html#join" data-remember-next>Or join the Silver Club for $12.50 off + 5% back ${ICONS.arrow}</a>
     <button data-close-modal class="lead-skip">No thanks</button></div>`, 'lead-pop sheet');
-  $('[data-lead]').addEventListener('submit', (e) => { e.preventDefault(); e.target.classList.add('hide'); $('#code-reveal').classList.add('is-on'); confetti({ count: 70 }); });
+  $('[data-lead]').addEventListener('submit', (e) => { e.preventDefault(); notify('newsletter', $('#lead-email').value, { code: 'WELCOME15' }, { quiet: true }); e.target.classList.add('hide'); $('#code-reveal').classList.add('is-on'); confetti({ count: 70 }); });
 }
 
 /** A small corner tab instead of an interrupting popup; the full offer opens only on request (or once on desktop exit-intent). */
@@ -1070,8 +1091,8 @@ export function boot({ chrome = true } = {}) {
     }
   });
   document.addEventListener('submit', (e) => {
-    if (e.target.matches('[data-newsletter]')) { e.preventDefault(); e.target.reset(); cart.applyPromo('WELCOME15'); store.set('lead', true); toast({ icon: ICONS.sparkle, html: '<strong>Welcome to The Silver Letter.</strong> WELCOME15 is saved to your bag.', sub: '15% off your first order', dark: true }); }
-    if (e.target.matches('[data-contact]')) { e.preventDefault(); closeModal(); toast({ icon: ICONS.mail, html: '<strong>Message received.</strong> We’ll reply within a few hours.', sub: 'Demo — nothing was sent', dark: true }); }
+    if (e.target.matches('[data-newsletter]')) { e.preventDefault(); notify('newsletter', $('input[type=email]', e.target).value, { code: 'WELCOME15' }, { quiet: true }); e.target.reset(); cart.applyPromo('WELCOME15'); store.set('lead', true); toast({ icon: ICONS.sparkle, html: '<strong>Welcome to The Silver Letter.</strong> WELCOME15 is saved to your bag.', sub: '15% off your first order', dark: true }); }
+    if (e.target.matches('[data-contact]')) { e.preventDefault(); notify('contact', $('#ct-email').value, { message: $('#ct-msg').value }, { quiet: true }); closeModal(); toast({ icon: ICONS.mail, html: '<strong>Message received.</strong> We’ll reply within a few hours.', sub: mailEnabled() ? 'A copy is in your inbox' : '', dark: true }); }
   });
   on('cart', () => {
     updateCounts();

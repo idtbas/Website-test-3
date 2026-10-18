@@ -823,3 +823,26 @@
 .g-note { display: flex; gap: 8px; align-items: center; margin: 0; font-size: 13.5px; color: var(--muted); }
 .avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
 .avatar { overflow: hidden; }
+
+/* Mailbox */
+.mail-note { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 16px; padding: 12px 14px; border-radius: 12px; background: var(--mist); font-size: 13px; color: var(--muted); }
+.mail-note svg { width: 18px; height: 18px; flex: none; color: var(--ink); }
+.mail-list { border: 1px solid var(--line); border-radius: 18px; overflow: hidden; }
+.mail-row { width: 100%; display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 14px 18px; text-align: left; border-bottom: 1px solid var(--line); transition: background .2s; }
+.mail-row:last-child { border-bottom: 0; }
+.mail-row:hover { background: var(--mist); }
+.mail-ico { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--silver-soft); box-shadow: var(--chrome-edge); }
+.mail-ico svg { width: 18px; height: 18px; }
+.mail-main b { display: block; font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mail-row.is-new .mail-main b { font-weight: 700; }
+.mail-row.is-new .mail-ico { box-shadow: var(--chrome-edge), 0 0 0 2px var(--ink); }
+.mail-main small { color: var(--muted); font-size: 12px; }
+.mail-status { font: 600 10px/1 var(--sans); letter-spacing: .1em; text-transform: uppercase; padding: 6px 9px; border-radius: 99px; background: var(--mist); color: var(--muted); white-space: nowrap; }
+.mail-status.s-sent { background: #e6f4ec; color: var(--ok); }
+.mail-status.s-failed { background: #fdecea; color: var(--alert); }
+.mail-modal .modal-panel { width: min(720px, 100%); }
+.mail-view { display: grid; grid-template-rows: auto minmax(0, 1fr); height: min(86vh, 900px); }
+.mail-view-head { padding: 24px 64px 16px 24px; border-bottom: 1px solid var(--line); }
+.mail-view-head h2 { margin: 6px 0 0; font-size: 24px; }
+.mail-frame { width: 100%; height: 100%; border: 0; background: #f1f1f3; }
+@media (max-width: 600px) { .mail-row { padding: 12px 14px; gap: 12px; grid-template-columns: 36px minmax(0, 1fr); } .mail-status { grid-column: 2; justify-self: start; } .mail-view { height: 86dvh; } }

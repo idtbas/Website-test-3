@@ -23,6 +23,27 @@ The account page and checkout can show Google's official **Continue with Google*
 
 A client ID is meant to be public, so it's safe in the repo. Accounts are still kept in each visitor's browser and the sign-in token is checked in the browser, not on a server. That's fine for a demo, but a real shop would verify it on a backend.
 
+## Emails (free with EmailJS)
+
+The store sends branded HTML emails for:
+- welcome (new account, including Google sign-ups)
+- new sign-in alerts
+- password changes
+- order confirmations (with product photos and totals)
+- order updates (one-click add-ons after checkout)
+- shipping notices
+- the newsletter discount code
+- contact form receipts
+
+Every email is also saved in the member's **Mailbox** tab in their account.
+
+Real delivery goes through EmailJS, which sends from your own Gmail account and is free for 200 emails a month. Setup works on a phone or tablet:
+1. Sign up at https://www.emailjs.com.
+2. **Email Services → Add New Service → Gmail → Connect Account → Create Service**. Copy the **Service ID**.
+3. **Email Templates → Create New Template**. Set *Subject* to `{{subject}}`, *To Email* to `{{to_email}}` and *From Name* to `{{from_name}}`. In the *Content* code editor, replace everything with `{{{html}}}` (three braces). Save and copy the **Template ID**.
+4. **Account → General**: copy the **Public Key**.
+5. Put the three values in `EMAILJS` in `assets/js/config.js`.
+
 ## Run it locally
 
 It's a static site with no build step. Serve the folder with any static server:
