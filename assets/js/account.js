@@ -1,5 +1,5 @@
 /* Silver Club — sign up, sign in and the member dashboard. Demo: accounts live in this browser only. */
-import { boot, $, $$, esc, money, money2, account, ICONS, toast, confetti, cart, productCard, bindTilt, wishlist, store, session, POINT_VALUE, WELCOME_POINTS, TIERS, fmtDate, checkSvg, reveal, optsText, dispatchDate, TAX, openDrawer } from './app.js';
+import { boot, $, $$, esc, money, money2, account, ICONS, toast, confetti, cart, productCard, bindTilt, wishlist, store, session, POINT_VALUE, WELCOME_POINTS, TIERS, fmtDate, checkSvg, reveal, optsText, dispatchDate, TAX, openDrawer, mountGoogleButton, googleEnabled } from './app.js';
 import { PRODUCTS, byId, img } from './products.js';
 
 boot();
@@ -48,6 +48,7 @@ function renderAuth() {
         <button role="tab" data-mode="join" aria-selected="${mode === 'join'}">Create account</button>
         <button role="tab" data-mode="signin" aria-selected="${mode !== 'join'}">Sign in</button>
       </div>
+      <div class="sso hide" data-sso><div class="g-btn" id="g-btn"></div><div class="or">or use your email</div></div>
       <form id="join-form" class="auth-form ${mode === 'join' ? '' : 'hide'}" novalidate>
         <div><h2 class="display h3">Create your account</h2><p class="muted">Takes 30 seconds. Your $12.50 credit is applied right away.</p></div>
         <div class="row-2">${field('j-first', 'First name', { ac: 'given-name' })}${field('j-last', 'Last name', { ac: 'family-name' })}</div>
@@ -79,6 +80,7 @@ function renderAuth() {
     </div>
   </section>`;
   bindTilt(root);
+  if (googleEnabled()) mountGoogleButton($('#g-btn'), (r) => { if (r.ok) afterAuth(r.created); else toast({ html: r.msg, dark: true }); });
   if (location.hash === '#join' || location.hash === '#signin') setTimeout(() => $('#auth-card').scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
 }
 
@@ -236,7 +238,7 @@ function renderProfile() {
       <div class="row-2">${field('p-phone', 'Phone (optional)', { type: 'tel', value: u.phone, req: false, ac: 'tel' })}${field('p-bday', 'Birthday', { type: 'date', value: u.birthday, req: false, ac: 'bday' })}</div>
       <button class="btn btn-ink" type="submit">Save changes</button></form>
     <div class="grid" style="gap:24px;align-content:start">
-      <form class="cbox" id="pw-form" novalidate><h3 class="display h3" style="margin:0">Password</h3>${pwField('pw-cur', 'Current password', 'current-password')}${pwField('pw-new', 'New password (8+ characters)', 'new-password')}<button class="btn btn-ghost" type="submit">Update password</button></form>
+      <form class="cbox" id="pw-form" novalidate><h3 class="display h3" style="margin:0">Password</h3>${u.google ? `<p class="g-note"><svg viewBox="0 0 48 48" width="18" height="18" aria-hidden="true"><path fill="#4285F4" d="M45.1 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h11.8c-.5 2.8-2.1 5.1-4.4 6.7v5.5h7.1c4.2-3.8 6.6-9.5 6.6-16.2z"/><path fill="#34A853" d="M24 46c5.9 0 10.9-2 14.5-5.3l-7.1-5.5c-2 1.3-4.5 2.1-7.4 2.1-5.7 0-10.6-3.9-12.3-9.1H4.4v5.7C8 41.1 15.4 46 24 46z"/><path fill="#FBBC05" d="M11.7 28.2c-.4-1.3-.7-2.7-.7-4.2s.3-2.9.7-4.2v-5.7H4.4C2.9 17.1 2 20.4 2 24s.9 6.9 2.4 9.9l7.3-5.7z"/><path fill="#EA4335" d="M24 10.7c3.2 0 6.1 1.1 8.4 3.3l6.3-6.3C34.9 4.1 29.9 2 24 2 15.4 2 8 6.9 4.4 14.1l7.3 5.7c1.7-5.2 6.6-9.1 12.3-9.1z"/></svg>You sign in with Google${u.pw ? '' : '. Add a password to also sign in with your email.'}</p>` : ''}${u.pw ? pwField('pw-cur', 'Current password', 'current-password') : ''}${pwField('pw-new', u.pw ? 'New password (8+ characters)' : 'Password (8+ characters)', 'new-password')}<button class="btn btn-ghost" type="submit">${u.pw ? 'Update password' : 'Add password'}</button></form>
       <div class="cbox"><h3 class="display h3" style="margin:0">Preferences</h3>
         <label class="pref"><span><b>Early access emails</b><small>New drops and member-only sales</small></span><span class="toggle"><input type="checkbox" id="pref-news" ${u.news ? 'checked' : ''} aria-label="Early access emails"><i></i></span></label>
         <label class="pref"><span><b>Price-drop alerts</b><small>When something you saved goes on sale</small></span><span class="toggle"><input type="checkbox" id="pref-drop" ${u.drops !== false ? 'checked' : ''} aria-label="Price-drop alerts"><i></i></span></label>
@@ -346,12 +348,14 @@ root.addEventListener('submit', async (e) => {
     renderDash(); tab = 'profile'; renderPanel();
   }
   if (f.id === 'pw-form') {
-    const cur = await account.checkPassword($('#pw-cur').value);
+    const hadPw = !!account.user.pw;
+    const cur = !hadPw || await account.checkPassword($('#pw-cur').value);
     const ok = [setErr('pw-cur', cur ? '' : 'That isn’t your current password'), setErr('pw-new', $('#pw-new').value.length >= 8 ? '' : 'Use at least 8 characters')];
     if (ok.includes(false)) return;
     await account.setPassword($('#pw-new').value);
     f.reset(); $$('.field', f).forEach((x) => x.classList.remove('is-valid'));
-    toast({ icon: ICONS.lock, html: 'Password updated', dark: true, timeout: 2400 });
+    toast({ icon: ICONS.lock, html: hadPw ? 'Password updated' : 'Password added. You can now sign in with email too.', dark: true, timeout: 2600 });
+    if (!hadPw) renderProfile();
   }
 });
 

@@ -1,5 +1,6 @@
 /* Silver Shop — shared storefront engine: state, pricing, accounts, chrome (header/footer/drawer), and UI effects. */
 import { PRODUCTS, CATEGORIES, byId, img, CITIES } from './products.js';
+import { GOOGLE_CLIENT_ID } from './config.js';
 
 /* ------------------------------------------------------------------ */
 /* Utilities                                                           */
@@ -225,13 +226,32 @@ export const account = {
   async login(email, password) {
     const u = this.users[norm(email)];
     if (!u) return { ok: false, field: 'email', msg: 'We couldn’t find an account with that email.' };
+    if (!u.pw) return { ok: false, field: 'password', msg: 'This account signs in with Google. Use “Continue with Google” above.' };
     if (u.pw !== await hashPw(password, u.salt)) return { ok: false, field: 'password', msg: 'That password doesn’t match. Try again or reset it.' };
     this.session = u.email; this.save();
     return { ok: true };
   },
-  async checkPassword(pw) { const u = this.user; return !!u && u.pw === await hashPw(pw, u.salt); },
-  async setPassword(pw, email = this.session) { const u = this.users[norm(email)]; if (!u) return false; u.pw = await hashPw(pw, u.salt); this.save(); return true; },
-  logout() { this.session = null; this.save(); },
+  async checkPassword(pw) { const u = this.user; return !!u && !!u.pw && u.pw === await hashPw(pw, u.salt); },
+  async setPassword(pw, email = this.session) { const u = this.users[norm(email)]; if (!u) return false; if (!u.salt) u.salt = [...crypto.getRandomValues(new Uint8Array(8))].map((b) => b.toString(16)).join(''); u.pw = await hashPw(pw, u.salt); this.save(); return true; },
+  logout() { this.session = null; this.save(); try { window.google?.accounts.id.disableAutoSelect(); } catch { /* not loaded */ } },
+  /** Sign in (or sign up) with a Google ID token. Returns { ok, created }. */
+  googleSignIn(credential) {
+    let c;
+    try {
+      const b64 = credential.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+      c = JSON.parse(decodeURIComponent([...atob(b64)].map((ch) => '%' + ch.charCodeAt(0).toString(16).padStart(2, '0')).join('')));
+    } catch { return { ok: false, msg: 'Google sign-in failed. Please try again.' }; }
+    if (!c.email || c.email_verified === false || c.aud !== GOOGLE_CLIENT_ID || c.exp * 1000 < Date.now()) return { ok: false, msg: 'Google couldn’t verify that account.' };
+    const key = norm(c.email);
+    let created = false;
+    if (!this.users[key]) {
+      created = true;
+      this.users[key] = { first: c.given_name || c.name || key.split('@')[0], last: c.family_name || '', email: key, salt: '', pw: null, birthday: '', news: true, phone: '', created: Date.now(), points: WELCOME_POINTS, lifetime: 0, orders: [], addresses: [], history: [{ at: Date.now(), pts: WELCOME_POINTS, note: 'Welcome to the Silver Club' }] };
+    }
+    Object.assign(this.users[key], { google: true, picture: c.picture || '' });
+    this.session = key; this.save();
+    return { ok: true, created };
+  },
   update(fields) {
     const u = this.user; if (!u) return { ok: false };
     if (fields.email && norm(fields.email) !== u.email) {
@@ -248,6 +268,36 @@ export const account = {
   addPoints(pts, note) { const u = this.user; if (!u || !pts) return; u.points = Math.max(0, u.points + pts); if (pts > 0) u.lifetime += pts; u.history.unshift({ at: Date.now(), pts, note }); this.save(); },
   initials(u = this.user) { return u ? ((u.first[0] || '') + (u.last[0] || '')).toUpperCase() : ''; },
 };
+
+/* "Continue with Google": Google Identity Services, loaded only when a client ID is configured. */
+export const googleEnabled = () => !!GOOGLE_CLIENT_ID;
+let gisReady = null;
+let gisHandler = null;
+function loadGoogle() {
+  if (!gisReady) gisReady = new Promise((res, rej) => {
+    const sc = document.createElement('script');
+    sc.src = 'https://accounts.google.com/gsi/client'; sc.async = true;
+    sc.onload = () => {
+      window.google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: (r) => gisHandler?.(r), ux_mode: 'popup', auto_select: false, itp_support: true, context: 'signin' });
+      res(window.google);
+    };
+    sc.onerror = rej;
+    document.head.appendChild(sc);
+  });
+  return gisReady;
+}
+/** Render Google's official button into `el`; `onDone({ ok, created, msg })` runs after sign-in. */
+export async function mountGoogleButton(el, onDone, { text = 'continue_with' } = {}) {
+  if (!el || !googleEnabled()) return false;
+  try {
+    const g = await loadGoogle();
+    gisHandler = (r) => onDone(account.googleSignIn(r.credential));
+    el.innerHTML = '';
+    g.accounts.id.renderButton(el, { type: 'standard', theme: 'outline', size: 'large', shape: 'pill', text, logo_alignment: 'center', width: Math.min(400, Math.max(240, el.clientWidth || 320)) });
+    el.closest('[data-sso]')?.classList.remove('hide');
+    return true;
+  } catch { return false; }
+}
 
 /* Wishlist & recently viewed */
 export const wishlist = {
@@ -975,12 +1025,13 @@ function updateCounts() {
   if (db) db.textContent = c ? `(${c})` : '';
   if (dw) dw.textContent = w ? `(${w})` : '';
 }
+export const avatarHtml = (u) => (u.picture ? `<span class="avatar"><img src="${esc(u.picture)}" alt="" referrerpolicy="no-referrer"></span>` : `<span class="avatar">${esc(account.initials(u))}</span>`);
 function updateAccountUI() {
   const u = account.user;
   const a = $('#acct-btn');
-  if (a) { a.innerHTML = u ? `<span class="avatar">${esc(account.initials(u))}</span>` : ICONS.user; a.setAttribute('aria-label', u ? `Your account (${u.first})` : 'Sign in or create an account'); }
+  if (a) { a.innerHTML = u ? avatarHtml(u) : ICONS.user; a.setAttribute('aria-label', u ? `Your account (${u.first})` : 'Sign in or create an account'); }
   const m = $('#mnav-member');
-  if (m) m.innerHTML = u ? `<span class="avatar">${esc(account.initials(u))}</span><span><b>${esc(u.first)}</b><small>${u.points.toLocaleString()} Silver Points · ${account.tier(u).name}</small></span>` : `<span class="avatar">${ICONS.user}</span><span><b>Sign in or join</b><small>$12.50 off your first order</small></span>`;
+  if (m) m.innerHTML = u ? `${avatarHtml(u)}<span><b>${esc(u.first)}</b><small>${u.points.toLocaleString()} Silver Points · ${account.tier(u).name}</small></span>` : `<span class="avatar">${ICONS.user}</span><span><b>Sign in or join</b><small>$12.50 off your first order</small></span>`;
 }
 
 export function boot({ chrome = true } = {}) {

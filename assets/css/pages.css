@@ -814,3 +814,12 @@
   .promise div { padding: 20px 12px; }
 }
 @media (max-width: 900px) and (min-width: 761px) { .hero-product { display: none; } }
+
+/* Continue with Google */
+.sso { display: grid; gap: 16px; }
+.g-btn { display: flex; justify-content: center; min-height: 44px; }
+.co-sso { justify-items: center; gap: 8px; }
+.co-sso small { font-size: 12px; text-align: center; }
+.g-note { display: flex; gap: 8px; align-items: center; margin: 0; font-size: 13.5px; color: var(--muted); }
+.avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+.avatar { overflow: hidden; }

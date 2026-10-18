@@ -12,6 +12,17 @@ To publish: open the repository's **Settings → Pages**. Under *Build and deplo
 
 Every push to that branch redeploys automatically. `404.html` handles mistyped links.
 
+## Continue with Google (free)
+
+The account page and checkout can show Google's official **Continue with Google** button. Members sign in with their Gmail account: no password to make, name and email filled in, and the $12.50 welcome credit applied. It uses Google Identity Services, which costs nothing. The button stays hidden until you add a client ID:
+
+1. Go to https://console.cloud.google.com and create a project (any name).
+2. **APIs & Services → OAuth consent screen**: choose *External*, enter an app name and support email, save, then **Publish app**.
+3. **APIs & Services → Credentials → Create credentials → OAuth client ID → Web application**. Under **Authorized JavaScript origins** add `https://idtbas.github.io` (and `http://localhost:8080` for local testing).
+4. Copy the Client ID (it ends in `.apps.googleusercontent.com`) into `assets/js/config.js`.
+
+A client ID is meant to be public, so it's safe in the repo. Accounts are still kept in each visitor's browser and the sign-in token is checked in the browser, not on a server. That's fine for a demo, but a real shop would verify it on a backend.
+
 ## Run it locally
 
 It's a static site with no build step. Serve the folder with any static server:

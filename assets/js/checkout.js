@@ -1,5 +1,5 @@
 /* Silver Shop — checkout. Demo only: no payment data leaves the browser and nothing is charged. */
-import { boot, $, $$, money2, esc, cart, TAX, ICONS, checkSvg, fmtDate, confetti, toast, store, session, account, POINT_VALUE, WELCOME_POINTS, FREE_GIFT, dispatchDate, rewardMeter, gapFillHtml, optsText } from './app.js';
+import { boot, $, $$, money2, esc, cart, TAX, ICONS, checkSvg, fmtDate, confetti, toast, store, session, account, POINT_VALUE, WELCOME_POINTS, FREE_GIFT, dispatchDate, rewardMeter, gapFillHtml, optsText, mountGoogleButton, googleEnabled } from './app.js';
 import { byId, img } from './products.js';
 
 boot({ chrome: false });
@@ -81,6 +81,7 @@ function init() {
       <form class="co-panel" data-step="1" novalidate>
         <div class="grid" style="gap:12px"><span class="eyebrow" style="text-align:center">Express checkout</span>
           <div class="express-co"><button type="button" class="x1" data-express="wallet">Express Pay</button><button type="button" class="x2" data-express="wallet">Silver Pay</button><button type="button" class="x3" data-express="pay4">Pay in 4</button></div></div>
+        ${!account.user && googleEnabled() ? '<div class="sso co-sso hide" data-sso><div class="g-btn" id="co-g-btn"></div><small class="muted">Sign in with Google to fill in your details and use your $12.50 welcome credit</small></div>' : ''}
         <div class="or">or continue below</div>
         <div class="flex between center wrap-f gap-8"><h3>Contact</h3><span class="muted" style="font-size:13px" id="acct-note">${acctNote()}</span></div>
         ${savedAddrs()}
@@ -159,6 +160,15 @@ function init() {
   </div>`;
 
   bind();
+  if (!account.user) mountGoogleButton($('#co-g-btn'), (r) => {
+    if (!r.ok) { toast({ html: r.msg, dark: true }); return; }
+    const u = account.user;
+    Object.assign(data, { email: u.email, first: u.first, last: u.last, usePoints: true }); save();
+    session.set('g-welcome', r.created);
+    location.reload();
+  });
+  const gw = session.get('g-welcome', null);
+  if (gw !== null && account.user) { toast({ icon: ICONS.gift, html: gw ? `<strong>Welcome, ${esc(account.user.first)}!</strong> $12.50 in points is ready to use.` : '<strong>Signed in with Google.</strong> Your points are ready.', dark: true }); session.set('g-welcome', null); }
   goTo(step, false);
   reserveTimer();
 }
