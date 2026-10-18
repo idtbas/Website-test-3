@@ -224,7 +224,8 @@ export function bindTilt(root = document) {
   $$('[data-tilt]', root).forEach((el) => {
     if (el._tilt) return; el._tilt = true;
     const max = +(el.dataset.tilt || 7);
-    el.addEventListener('pointermove', (e) => {
+    const zone = el.closest('.card') || el;
+    zone.addEventListener('pointermove', (e) => {
       const r = el.getBoundingClientRect();
       const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
       el.style.setProperty('--ry', ((x - 0.5) * max).toFixed(2) + 'deg');
@@ -232,7 +233,7 @@ export function bindTilt(root = document) {
       el.style.setProperty('--gx', x * 100 + '%');
       el.style.setProperty('--gy', y * 100 + '%');
     });
-    el.addEventListener('pointerleave', () => { el.style.setProperty('--rx', '0deg'); el.style.setProperty('--ry', '0deg'); });
+    zone.addEventListener('pointerleave', () => { el.style.setProperty('--rx', '0deg'); el.style.setProperty('--ry', '0deg'); });
   });
 }
 
@@ -256,7 +257,9 @@ function bindCardActions() {
       return;
     }
     const qv = e.target.closest('[data-quick-view]');
-    if (qv) { e.preventDefault(); quickView(byId[qv.dataset.quickView]); }
+    if (qv) { e.preventDefault(); quickView(byId[qv.dataset.quickView]); return; }
+    const media = e.target.closest('.card .card-media');
+    if (media && !e.target.closest('button, a')) location.href = `product.html?id=${media.closest('.card').dataset.id}`;
   });
 }
 

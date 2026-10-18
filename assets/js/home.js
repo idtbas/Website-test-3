@@ -34,8 +34,8 @@ async function hero() {
       camera.aspect = w / h;
       const mobile = w < 900;
       base.x = mobile ? 0 : Math.min(1.7, (w / h) * 0.85);
-      base.y = mobile ? 0.9 : 0.25;
-      camera.position.set(0, 0.05, mobile ? 10.5 : 8.2);
+      base.y = mobile ? 1.55 : 0.25;
+      camera.position.set(0, 0.05, mobile ? 14 : 8.2);
       camera.lookAt(0, 0.05, 0);
       camera.updateProjectionMatrix();
     };

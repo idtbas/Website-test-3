@@ -92,7 +92,7 @@ function init() {
         <div class="review-box" id="ship-recap"></div>
         <h3>Shipping method</h3>
         <div class="radio-cards" id="methods"></div>
-        <div class="bump" id="bump"></div>
+        <div class="order-bump" id="bump"></div>
         <h3>Gift options</h3>
         <div class="gift-box">
           <div class="flex center gap-12"><div style="flex:1"><b style="font-size:14px">Signature gift wrap</b><div class="muted" style="font-size:12.5px">Black lacquer box, silver ribbon, wax seal · +$6</div></div><span class="toggle"><input type="checkbox" id="wrap" ${data.wrap ? 'checked' : ''} aria-label="Add gift wrap"><i></i></span></div>
