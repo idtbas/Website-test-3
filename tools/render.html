@@ -1,0 +1,28 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Silver Shop — product renderer</title>
+<style>html,body{margin:0;background:#fff}canvas{display:block}</style>
+<script type="importmap">{"imports":{"three":"../assets/vendor/three/three.module.min.js"}}</script>
+</head><body>
+<script type="module">
+import * as THREE from 'three';
+import { buildModel, createStudio, frame, VIEWS } from '../assets/js/models.js';
+const SIZE = +(new URLSearchParams(location.search).get('size') || 1100);
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1); renderer.setSize(SIZE, SIZE); renderer.setClearColor(0x000000, 0);
+document.body.appendChild(renderer.domElement);
+const { scene } = createStudio(renderer);
+const camera = new THREE.PerspectiveCamera(24, 1, 0.01, 100);
+let current;
+window.__render = (id, view = 0, finish = 'polished', type = 'image/webp') => {
+  if (current) scene.remove(current);
+  current = buildModel(id, finish);
+  scene.add(current);
+  const [az, el, zoom] = (VIEWS[id] || VIEWS.default)[view];
+  frame(camera, current, az, el, zoom);
+  renderer.render(scene, camera);
+  return renderer.domElement.toDataURL(type, 0.9);
+};
+const q = new URLSearchParams(location.search);
+if (q.get('id')) window.__render(q.get('id'), +(q.get('view') || 0), q.get('finish') || 'polished');
+window.__ready = true;
+</script></body></html>

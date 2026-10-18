@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Silver Shop — Sterling silver jewelry, forged in light</title>
+  <meta name="description" content="Hand-finished 925 sterling silver rings, necklaces, earrings, bracelets and investment bullion. Free insured shipping over $150 and 60-day returns.">
+  <meta name="theme-color" content="#ffffff">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="assets/fonts/cormorant-garamond-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/inter-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <link rel="stylesheet" href="assets/css/pages.css">
+  <script type="importmap">{ "imports": { "three": "./assets/vendor/three/three.module.min.js" } }</script>
+</head>
+<body>
+<main id="main">
+  <!-- HERO -->
+  <section class="hero" aria-label="Featured">
+    <div class="hero-word" aria-hidden="true"><span class="silver-3d" data-text="Silver">Silver</span></div>
+    <div class="hero-shadow" aria-hidden="true"></div>
+    <div class="hero-canvas" id="hero-canvas"></div>
+    <div class="wrap hero-top"><span class="eyebrow">The Sterling Collection · Autumn 2026</span><span class="eyebrow hide-sm">Drag to spin</span></div>
+    <div class="wrap hero-ui">
+      <div class="hero-copy">
+        <span class="eyebrow">925 Sterling · Hand-finished</span>
+        <h1 class="display h1"><span class="reveal-mask"><span>Forged</span></span> <span class="reveal-mask"><span style="--d:120ms">in <em>light.</em></span></span></h1>
+        <p class="lead reveal" style="--d:300ms">Jewelry milled from solid sterling and polished by hand in seven stages — until it holds a reflection like still water.</p>
+        <div class="hero-cta reveal" style="--d:420ms">
+          <a class="btn btn-ink btn-lg" href="shop.html" data-magnetic>Shop the collection <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          <a class="btn btn-silver btn-lg" href="shop.html?sale=1" data-magnetic>⚡ Flash sale</a>
+        </div>
+        <div class="hero-stats reveal" style="--d:540ms">
+          <div><b data-count="48000">0</b><span>Happy owners</span></div>
+          <div><b>4.9★</b><span>14k reviews</span></div>
+          <div><b>60 days</b><span>Free returns</span></div>
+        </div>
+      </div>
+      <aside class="hero-product reveal" style="--d:700ms" aria-label="Featured product">
+        <img src="assets/img/products/halo-solitaire-1.webp" alt="Halo Solitaire ring">
+        <div>
+          <span class="tag tag-flash">Flash −24%</span>
+          <div style="font-weight:600;margin-top:6px">Halo Solitaire</div>
+          <div class="price" style="font-size:14px">$189<s>$249</s></div>
+          <span class="stock-low" style="margin-top:6px">Only 3 left</span>
+        </div>
+        <button class="btn btn-ink" data-hero-add>Add to bag — $189</button>
+      </aside>
+    </div>
+    <span class="scroll-cue" aria-hidden="true"></span>
+  </section>
+
+  <!-- MARQUEE -->
+  <div class="marquee" aria-hidden="true"><div class="marquee-track" id="marquee"></div></div>
+
+  <!-- FLASH SALE -->
+  <section class="section flash" id="flash">
+    <div class="flash-glow"></div>
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">⚡ Flash Sale · Today only</p>
+          <h2 class="display h2" style="margin-top:14px">Up to <span class="silver-text">25% off</span><br>our most-loved pieces</h2>
+        </div>
+        <div style="display:grid;gap:12px;justify-items:end">
+          <span class="eyebrow">Ends in</span>
+          <div class="countdown" id="flash-countdown"></div>
+        </div>
+      </div>
+      <div class="grid grid-4" id="flash-grid"></div>
+      <div style="text-align:center;margin-top:48px"><a class="btn btn-silver btn-lg" href="shop.html?sale=1" data-magnetic>Shop all deals</a></div>
+    </div>
+  </section>
+
+  <!-- CATEGORIES -->
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 class="display h2 reveal">Shop by <em class="serif-i">category</em></h2>
+        <p class="lead reveal" style="--d:120ms">Every piece is cast or milled in recycled 925 sterling, finished by hand and backed by a lifetime warranty.</p>
+      </div>
+      <div class="bento" id="bento"></div>
+    </div>
+  </section>
+
+  <!-- BESTSELLERS -->
+  <section class="section" style="padding-top:0">
+    <div class="wrap">
+      <div class="section-head">
+        <div><p class="eyebrow reveal">Most wanted</p><h2 class="display h2 reveal" style="margin-top:14px">Bestsellers</h2></div>
+        <div class="rail-nav"><button aria-label="Previous" data-rail="-1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button><button aria-label="Next" data-rail="1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div>
+      </div>
+      <div class="rail" id="rail"></div>
+      <div class="rail-progress"><i id="rail-progress"></i></div>
+    </div>
+  </section>
+
+  <!-- STACK & SAVE -->
+  <section class="wrap" style="padding-bottom:clamp(64px,9vw,140px)">
+    <div class="stack" id="stack">
+      <div class="stack-copy">
+        <p class="eyebrow" style="color:#8a8a92">Stack &amp; Save</p>
+        <h2 class="display h2">The more you stack,<br>the more you <em class="serif-i silver-text">shine.</em></h2>
+        <p class="lead">Mix any rings, necklaces, earrings or bracelets. Your discount is applied automatically in your bag.</p>
+        <div class="tiers"><div class="tier"><b>10%</b><span>off 2 pieces</span></div><div class="tier"><b>15%</b><span>off 3+ pieces</span></div></div>
+        <div><a class="btn btn-silver btn-lg" href="shop.html?cat=rings" data-magnetic>Build your stack</a></div>
+      </div>
+      <div class="stack-visual"><img src="assets/img/products/aura-band-1.webp" alt="" loading="lazy"><img src="assets/img/products/halo-solitaire-1.webp" alt="" loading="lazy"><img src="assets/img/products/twist-rope-1.webp" alt="" loading="lazy"><div class="disc-glow"></div></div>
+    </div>
+  </section>
+
+  <!-- 925 STORY -->
+  <section class="section" style="padding-top:0">
+    <div class="wrap story">
+      <div class="story-media" id="story-media">
+        <img class="is-on" src="assets/img/products/twist-rope-3.webp" alt="" loading="lazy">
+        <img src="assets/img/products/eagle-coin-3.webp" alt="" loading="lazy">
+        <img src="assets/img/products/atlas-cuff-2.webp" alt="" loading="lazy">
+        <img src="assets/img/products/compass-medallion-3.webp" alt="" loading="lazy">
+        <svg class="stamp" viewBox="0 0 100 100" aria-hidden="true"><defs><path id="c" d="M50,50 m-38,0 a38,38 0 1,1 76,0 a38,38 0 1,1 -76,0"/></defs><text font-size="9.4" letter-spacing="3" font-family="Inter" font-weight="600"><textPath href="#c">925 STERLING · HAND FINISHED · LIFETIME ·</textPath></text><circle cx="50" cy="50" r="6" fill="#0a0a0b"/></svg>
+      </div>
+      <div class="story-steps">
+        <div class="story-step" data-step="0"><span class="num silver-text">92.5%</span><h3 class="display h3">Pure silver. Nothing less.</h3><p class="lead">Every piece is 925 sterling — 92.5% fine silver alloyed with copper for strength — stamped and certified. Never plated, never hollow-filled.</p></div>
+        <div class="story-step" data-step="1"><span class="num silver-text">100%</span><h3 class="display h3">Recycled at the source.</h3><p class="lead">Our silver is refined from post-consumer and industrial scrap — the same metal, with a fraction of the footprint of newly mined ore.</p></div>
+        <div class="story-step" data-step="2"><span class="num silver-text">7 stages</span><h3 class="display h3">Polished by hand.</h3><p class="lead">From 400-grit to rouge, each surface passes through seven polishing stages, then an invisible e-coat that keeps tarnish away for years.</p></div>
+        <div class="story-step" data-step="3"><span class="num silver-text">Forever</span><h3 class="display h3">Guaranteed for life.</h3><p class="lead">Free resizing, re-polishing and repairs for as long as you own it. That’s how sure we are.</p><div><a class="btn-link" href="shop.html">Discover the collection <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- REVIEWS -->
+  <section class="section" style="padding-top:0">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 class="display h2 reveal">Loved by <em class="serif-i">48,000+</em></h2>
+        <div class="score reveal"><b>4.9</b><div><span class="stars" style="--pct:98%;font-size:18px"></span><div class="muted" style="font-size:13px;margin-top:6px">from 14,207 verified reviews</div></div></div>
+      </div>
+    </div>
+    <div class="reviews-marquee"><div class="reviews-track" id="reviews-track"></div></div>
+  </section>
+
+  <!-- BULLION -->
+  <section class="section" style="padding-top:0">
+    <div class="wrap bullion">
+      <div class="bullion-art reveal" data-tilt="6"><img src="assets/img/products/eagle-coin-1.webp" alt="Silver Star 1 oz coin" loading="lazy"></div>
+      <div style="display:grid;gap:22px">
+        <p class="eyebrow reveal">Investment silver</p>
+        <h2 class="display h2 reveal">Silver you can <em class="serif-i">hold.</em></h2>
+        <p class="lead reveal">Our .999 fine coins and serial-numbered bars ship fully insured in tamper-evident packaging. Prices track the live spot market.</p>
+        <div class="ticker-card reveal">
+          <div><span>Spot / oz</span><b id="tk-spot">$31.42</b></div>
+          <div><span>24h</span><b id="tk-chg" style="color:var(--ok)">+0.64%</b></div>
+          <div><span>Coin from</span><b>$42</b></div>
+        </div>
+        <svg class="spark reveal" id="spark" viewBox="0 0 400 80" preserveAspectRatio="none" aria-hidden="true"></svg>
+        <div class="flex gap-12 wrap-f reveal"><a class="btn btn-ink btn-lg" href="shop.html?cat=bullion">Shop bullion</a><a class="btn btn-ghost btn-lg" href="product.html?id=eagle-coin">Buy a 1 oz coin — $42</a></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROMISE -->
+  <div class="promise" id="promise"></div>
+</main>
+<script type="module" src="assets/js/home.js"></script>
+</body>
+</html>

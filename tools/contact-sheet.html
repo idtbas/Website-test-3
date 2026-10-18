@@ -1,0 +1,7 @@
+<!doctype html><meta charset="utf-8"><style>body{margin:0;display:grid;grid-template-columns:repeat(5,1fr);gap:6px;background:#fff;padding:6px;font:12px sans-serif}figure{margin:0;background:#f3f3f3}img{width:100%;display:block}figcaption{padding:4px}</style>
+<script type="module">
+const v = new URLSearchParams(location.search).get('v') || 1;
+const { MODEL_IDS } = await import('../assets/js/models.js');
+document.body.innerHTML = MODEL_IDS.map(id => `<figure><img src="../assets/img/products/${id}-${v}.webp?${Date.now()}"><figcaption>${id}</figcaption></figure>`).join('');
+</script>
+<script type="importmap">{"imports":{"three":"../assets/vendor/three/three.module.min.js"}}</script>
