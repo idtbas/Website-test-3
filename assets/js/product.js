@@ -1,9 +1,9 @@
-import { boot, $, $$, money, money2, esc, productCard, bindTilt, addToCart, cart, wishlist, markViewed, store, ICONS, starsHtml, optionPickers, bindPickers, missingOption, pct, remaining, addBusinessDays, fmtDate, unitPrice, ENGRAVE_FEE, openModal, closeModal, toast, reveal } from './app.js';
+import { boot, $, $$, money, money2, esc, productCard, bindTilt, addToCart, cart, wishlist, markViewed, store, ICONS, starsHtml, optionPickers, bindPickers, missingOption, pct, remaining, addBusinessDays, fmtDate, unitPrice, ENGRAVE_FEE, openModal, closeModal, toast, reveal, param, account, POINT_VALUE, dispatchDate, isPhone, defaultOpts, session } from './app.js';
 import { PRODUCTS, CATEGORIES, byId, img, reviewsFor, ratingDistribution, seeded } from './products.js';
 
 boot();
 
-const id = new URLSearchParams(location.search).get('id');
+const id = param('id');
 const p = byId[id] || PRODUCTS[0];
 const cat = CATEGORIES.find((c) => c.id === p.category);
 markViewed(p.id);
@@ -22,7 +22,8 @@ $('#crumbs').innerHTML = `<a href="index.html">Home</a><span aria-hidden="true">
 
 /* ---------- Buy box ---------- */
 const cutoff = () => { const d = new Date(); d.setHours(15, 0, 0, 0); if (Date.now() > d) d.setDate(d.getDate() + 1); return d; };
-const arrive = () => { const now = new Date(); const ship = now.getHours() < 15 ? now : addBusinessDays(now, 1); return [addBusinessDays(ship, 1), addBusinessDays(ship, 3)]; };
+const arrive = () => { const ship = dispatchDate(); return [addBusinessDays(ship, 1), addBusinessDays(ship, 3)]; };
+const shipsToday = dispatchDate().toDateString() === new Date().toDateString();
 const [a1, a2] = arrive();
 
 $('#pdp').innerHTML = `
@@ -34,9 +35,10 @@ $('#pdp').innerHTML = `
     <div class="stage" id="stage">
       <div class="stage-badges">${p.flash ? `<span class="tag tag-flash">Flash −${pct(p)}%</span>` : ''}${p.badge && !p.flash ? `<span class="tag">${esc(p.badge)}</span>` : ''}${p.isNew ? '<span class="tag tag-silver">New</span>' : ''}</div>
       <button class="btn btn-silver btn-sm btn-3d" data-3d>${ICONS.cube} View in 3D</button>
-      <img id="main-img" src="${img(p.id, 1)}" alt="${esc(p.name)} in sterling silver" width="1100" height="1100">
+      <div class="slides" id="slides">${[1, 2, 3].map((n) => `<div class="slide ${n === 1 ? 'is-cur' : ''}"><img ${n === 1 ? 'id="main-img"' : 'loading="lazy"'} src="${img(p.id, n)}" alt="${esc(p.name)}, view ${n}" width="1100" height="1100"></div>`).join('')}</div>
+      <div class="dots" id="dots">${[1, 2, 3].map((n) => `<button type="button" data-dot="${n}" class="${n === 1 ? 'is-active' : ''}" aria-label="Show image ${n}"></button>`).join('')}</div>
       <div class="viewer" id="viewer"></div>
-      <div class="stage-hint hide" id="stage-hint">${ICONS.cube} Drag to rotate · Scroll to zoom</div>
+      <div class="stage-hint hide" id="stage-hint">${ICONS.cube} Drag to rotate · ${matchMedia('(pointer: coarse)').matches ? 'Pinch' : 'Scroll'} to zoom</div>
       <div class="viewers-pill" id="viewers"><span id="viewers-n">${14 + Math.floor(rand() * 20)}</span>&nbsp;people are viewing this</div>
     </div>
   </div>
@@ -48,7 +50,8 @@ $('#pdp').innerHTML = `
     </div>
     <div><h1 class="display">${esc(p.name)}</h1><p class="lead" style="margin:10px 0 0">${esc(p.tagline)}</p></div>
     <div class="buy-price"><span class="now" id="price-now">${money(p.price)}</span>${p.compareAt ? `<s>${money(p.compareAt)}</s><span class="save">Save ${money(p.compareAt - p.price)} (${pct(p)}%)</span>` : ''}</div>
-    <p class="pay4">or 4 interest-free payments of <b id="pay4">${money2(p.price / 4)}</b> with <b>Pay in 4</b> · 0% APR</p>
+    <p class="pay4">or 4 interest-free payments of <b id="pay4">${money2(p.price / 4)}</b> · 0% APR</p>
+    <a class="pts-inline" id="pts-inline" href="account.html${account.user ? '' : '#join'}" data-remember-next></a>
     ${p.flash ? `<div class="flash-strip"><span>⚡ Flash price ends in</span><strong id="flash-t">--:--:--</strong></div>` : ''}
     <div class="grid" style="gap:22px" id="pickers">${optionPickers(p, state)}</div>
     ${p.engravable ? `<div class="engrave" id="engrave">
@@ -67,9 +70,10 @@ $('#pdp').innerHTML = `
       <button class="btn btn-ink btn-lg" id="add">${ICONS.bag} <span id="add-label">Add to bag · ${money(p.price)}</span></button>
       <button class="icon-btn ${wishlist.has(p.id) ? 'is-on' : ''}" id="wish" aria-label="Save to wishlist">${ICONS.heart}</button>
     </div>
+    <p class="reassure"><span>${ICONS.return} Free 60-day returns</span><span>${ICONS.truck} ${shipsToday ? 'Ships today' : 'Ships ' + fmtDate(dispatchDate(), { weekday: 'long' })}</span><span>${ICONS.shield} Lifetime warranty</span></p>
     <button class="btn btn-silver btn-lg btn-block" id="buy-now">Buy it now — express checkout</button>
     <div class="delivery">
-      <div>${ICONS.truck}<span>Order within <b class="timer-inline" id="cutoff">--h --m</b> for <b>dispatch today</b>. Arrives <b>${fmtDate(a1)} – ${fmtDate(a2)}</b>.</span></div>
+      <div>${ICONS.truck}<span>${shipsToday ? `Order within <b class="timer-inline" id="cutoff">--h --m</b> for <b>dispatch today</b>.` : `Order now for dispatch <b>${fmtDate(dispatchDate(), { weekday: 'long' })}</b>.`} Arrives <b>${fmtDate(a1)} – ${fmtDate(a2)}</b>.</span></div>
       <div>${ICONS.return}<span><b>Free 60-day returns</b> & exchanges — even on engraved pieces.</span></div>
       <div>${ICONS.shield}<span><b>Lifetime warranty</b>: free resizing, polishing and repairs.</span></div>
       <div>${ICONS.gift}<span>Arrives in our signature <b>silver-foil gift box</b>, free.</span></div>
@@ -91,15 +95,18 @@ function updatePrice() {
   $('#add-label').textContent = `Add to bag · ${money(u * state.qty)}`;
   $('#sb-price').textContent = money(u * state.qty);
   $('#sb-opts').textContent = [({ polished: 'Mirror Polished', brushed: 'Satin Brushed', oxidized: 'Oxidized' })[state.finish], ...Object.values(state.opts)].join(' · ');
+  const pts = Math.floor(u * state.qty), usr = account.user;
+  $('#pts-inline').innerHTML = usr ? `${ICONS.sparkle}<span>Earn <b>${pts} Silver Points</b> · you have ${money2(usr.points * POINT_VALUE)} to spend</span>`
+    : `${ICONS.sparkle}<span>Members earn <b>${pts} points</b> + <b>$12.50 off</b> their first order · <u>Join free</u></span>`;
 }
 bindPickers($('#pickers'), p, state, (k) => {
   updatePrice();
   if (k === 'finish') {
-    $('#main-img').style.filter = FILTERS[state.finish];
+    $$('.slide img').forEach((im) => (im.style.filter = FILTERS[state.finish]));
     if (state.finish !== 'polished') show3d(); else if (viewer) viewer.setFinish(state.finish);
   }
 });
-$('#main-img').style.transition += ', filter .6s';
+
 
 /* ---------- Gallery, zoom & 3D ---------- */
 const stage = $('#stage');
@@ -119,14 +126,23 @@ async function show3d() {
     }
   } else viewer.setFinish(state.finish);
 }
+const slides = $('#slides');
+const curImg = () => $('.slide.is-cur img') || $('#main-img');
+function markSlide(n) {
+  $$('.slide').forEach((s, i) => s.classList.toggle('is-cur', i === n - 1));
+  $$('.thumbs [data-img]').forEach((b) => b.classList.toggle('is-active', !stage.classList.contains('is-3d') && +b.dataset.img === n));
+  $$('#dots [data-dot]').forEach((b) => b.classList.toggle('is-active', +b.dataset.dot === n));
+}
 function show2d(n) {
   stage.classList.remove('is-3d');
   $('.btn-3d').classList.remove('hide'); $('#stage-hint').classList.add('hide');
-  const im = $('#main-img');
-  im.style.opacity = 0;
-  setTimeout(() => { im.src = img(p.id, n); im.onload = () => (im.style.opacity = 1); }, 180);
-  $$('.thumbs button').forEach((b) => b.classList.toggle('is-active', b.dataset.img == n));
+  $('.thumbs [data-3d]').classList.remove('is-active');
+  slides.scrollTo({ left: (n - 1) * slides.clientWidth, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  markSlide(n);
 }
+let slideRaf = 0;
+slides.addEventListener('scroll', () => { cancelAnimationFrame(slideRaf); slideRaf = requestAnimationFrame(() => markSlide(Math.round(slides.scrollLeft / slides.clientWidth) + 1)); }, { passive: true });
+$('#dots').addEventListener('click', (e) => { const d = e.target.closest('[data-dot]'); if (d) show2d(+d.dataset.dot); });
 $('.thumbs').addEventListener('click', (e) => {
   const b = e.target.closest('button'); if (!b) return;
   b.matches('[data-3d]') ? show3d() : show2d(+b.dataset.img);
@@ -134,7 +150,7 @@ $('.thumbs').addEventListener('click', (e) => {
 $('.btn-3d').addEventListener('click', (e) => { e.stopPropagation(); show3d(); });
 if (matchMedia('(hover: hover)').matches) {
   stage.addEventListener('pointermove', (e) => {
-    if (stage.classList.contains('is-3d') || e.target.closest('button,.viewers-pill')) { stage.classList.remove('is-zoom'); return; }
+    if (stage.classList.contains('is-3d') || e.target.closest('button,.viewers-pill,.dots')) { stage.classList.remove('is-zoom'); return; }
     const r = stage.getBoundingClientRect();
     stage.style.setProperty('--zx', ((e.clientX - r.left) / r.width) * 100 + '%');
     stage.style.setProperty('--zy', ((e.clientY - r.top) / r.height) * 100 + '%');
@@ -148,7 +164,7 @@ setInterval(() => { const n = $('#viewers-n'); n.textContent = Math.max(6, +n.te
 const pad = (n) => String(n).padStart(2, '0');
 const tick = () => {
   const c = cutoff() - Date.now();
-  $('#cutoff').textContent = `${Math.floor(c / 36e5)}h ${pad(Math.floor((c % 36e5) / 6e4))}m`;
+  const co = $('#cutoff'); if (co) co.textContent = `${Math.floor(c / 36e5)}h ${pad(Math.floor((c % 36e5) / 6e4))}m`;
   if (p.flash) { const r = remaining(); $('#flash-t').textContent = `${pad(r.h)}:${pad(r.m)}:${pad(r.s)}`; }
 };
 tick(); setInterval(tick, 1000);
@@ -190,7 +206,7 @@ const doAdd = (btn) => {
   if (!validate()) return;
   btn.classList.add('is-loading'); btn.dataset.html = btn.innerHTML; btn.innerHTML = '<span class="spinner"></span>';
   setTimeout(() => {
-    addToCart(item(), stage.classList.contains('is-3d') ? $('#viewer canvas') || $('#main-img') : $('#main-img'));
+    addToCart(item(), stage.classList.contains('is-3d') ? $('#viewer canvas') || curImg() : curImg());
     btn.classList.remove('is-loading'); btn.innerHTML = `${ICONS.check} Added`;
     setTimeout(() => { btn.innerHTML = btn.dataset.html; }, 1600);
   }, 450);
@@ -206,12 +222,12 @@ $('#wish').addEventListener('click', (e) => {
 /* ---------- Sticky buy bar ---------- */
 $('#sb-img').src = img(p.id); $('#sb-name').textContent = p.name;
 const sb = $('#sticky-buy');
-new IntersectionObserver(([e]) => { const on = !e.isIntersecting && e.boundingClientRect.top < 0; sb.classList.toggle('is-on', on); sb.setAttribute('aria-hidden', String(!on)); }).observe($('#add'));
+new IntersectionObserver(([e]) => { const on = !e.isIntersecting && (e.boundingClientRect.top < 0 || isPhone()); sb.classList.toggle('is-on', on); sb.setAttribute('aria-hidden', String(!on)); }).observe($('#add'));
 updatePrice();
 
 /* ---------- Frequently bought together ---------- */
 const COMPLEMENTS = { rings: ['twist-rope', 'luna-hoops'], necklaces: ['cable-chain', 'starlight-studs'], earrings: ['infinity-pendant', 'aura-band'], bracelets: ['aura-band', 'luna-hoops'], men: ['aura-band', 'care-kit'], bullion: ['cast-bar', 'care-kit'], home: ['cascade-goblet', 'care-kit'], care: ['aura-band', 'luna-hoops'] };
-const defaults = (x) => { const o = {}; for (const [k, v] of Object.entries(x.options || {})) o[k] = k === 'size' ? (v.includes('7') ? '7' : v[1]) : k === 'length' ? '18"' : v[0]; return o; };
+const defaults = defaultOpts;
 const fbtIds = [p.id, ...(COMPLEMENTS[p.category] || []).filter((x) => x !== p.id)];
 while (fbtIds.length < 3) { const n = [...PRODUCTS].sort((a, b) => b.sold - a.sold).find((x) => !fbtIds.includes(x.id)); fbtIds.push(n.id); }
 const fbtOn = new Set(fbtIds);

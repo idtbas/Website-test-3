@@ -19,6 +19,7 @@ Then open http://localhost:8080. It needs a web server because ES modules don't 
 | `index.html` | Live WebGL hero (interlocked silver rings you can drag), flash sale with countdown and "% claimed" meters, category bento, bestseller rail, Stack & Save promo, scroll-driven 925 story, reviews marquee, bullion ticker |
 | `shop.html` | Collection page with category, price range, finish, rating and availability filters, sorting, grid density, active filter chips, and a promo tile. Filters sync to the URL (`?cat=rings`, `?sale=1`, `?sort=new`) |
 | `product.html?id=…` | Gallery with hover zoom, interactive 3D viewer that previews each finish in real time, size and length pickers, size guide, engraving with live preview, low-stock and "viewing now" signals, dispatch cutoff timer, delivery estimate, "Complete the set" bundle, filterable reviews (you can write one), related and recently viewed products, sticky add-to-bag bar |
+| `account.html` | Silver Club: create an account (password strength, show/hide, birthday), sign in, reset password. Member dashboard with a silver membership card, points balance and tier progress, orders with tracking and "Buy again", saved pieces, address book and profile settings |
 | `checkout.html` | 4-step checkout (information → shipping → payment → review): cart reservation timer, express checkout, email typo correction, address autocomplete, per-country address formats and tax, delivery dates per shipping method, one-click order bump, gift wrap and message, 3D silver card preview with Luhn validation and card-type detection, Pay in 4 schedule, promo codes, animated totals, processing sequence, confirmation with order timeline and a timed one-click add-on offer |
 
 Shared on every page: rotating announcement bar with a live spot-price ticker and sale timer, mega menu, search overlay (press `/`), cart and wishlist drawer with a free-shipping meter, Stack & Save hints and upsells, quick view, an add-to-bag animation that flies the item into the bag, social-proof toasts, and an exit-intent popup that reveals a discount code.
@@ -33,6 +34,12 @@ Shared on every page: rotating announcement bar with a live spot-price ticker an
 | `VIP20` | 20% off orders over $250 |
 
 **Stack & Save** applies on its own: 10% off two pieces of jewelry, 15% off three or more.
+
+**Rewards:** free insured shipping from $150 and a free Silver Care Kit from $250, shown as a two-step meter in the bag. When you're close, the bag suggests the one piece that gets you over the line.
+
+**Silver Club (accounts):** joining gives 250 points ($12.50) to spend straight away. Members earn 1 point per $1 (5% back) and can redeem points at checkout. You can join from the account page, from the "Save my details" box at checkout, or after ordering, which attaches the order to the new account. Accounts are stored only in your browser (passwords are salted and SHA-256 hashed), so it's a working demo, not a real login system.
+
+**On phones** there is a bottom tab bar, a compact "Added to bag" sheet, bottom-sheet bag, filters and quick view (drag down to close), a swipeable product gallery, a sticky add-to-bag bar, and a sticky continue button in checkout.
 
 Test cards: `4242 4242 4242 4242` is approved, `4000 0000 0000 0002` is declined. Use any future expiry date and any CVC.
 

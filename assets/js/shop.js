@@ -1,9 +1,9 @@
-import { boot, $, $$, productCard, bindTilt, checkSvg, esc, remaining } from './app.js';
+import { boot, $, $$, productCard, bindTilt, checkSvg, esc, remaining, param, closeDrawer } from './app.js';
 import { PRODUCTS, CATEGORIES } from './products.js';
 
 boot();
 
-const q = new URLSearchParams(location.search);
+const q = { get: (k) => param(k) };
 const state = {
   cats: new Set(q.get('cat') ? q.get('cat').split(',') : []),
   min: 0, max: 200,
@@ -66,6 +66,7 @@ function chips() {
 function render() {
   const list = filtered();
   $('#count').textContent = `${list.length} ${list.length === 1 ? 'piece' : 'pieces'}`;
+  $('#apply-mobile').textContent = list.length ? `Show ${list.length} ${list.length === 1 ? 'piece' : 'pieces'}` : 'No matches — clear a filter';
   const grid = $('#grid');
   grid.style.setProperty('--cols', state.cols);
   if (!list.length) {
@@ -126,8 +127,8 @@ document.addEventListener('click', (e) => {
   const pill = e.target.closest('[data-pill]');
   if (pill) { state.cats = new Set(pill.dataset.pill ? [pill.dataset.pill] : []); renderFilters(); render(); }
   if (e.target.closest('#clear-all, #reset-empty')) { Object.assign(state, { cats: new Set(), finishes: new Set(), rating: 0, sale: false, isNew: false, low: false, min: 0, max: 200 }); rangeUI(); renderFilters(); render(); }
-  if (e.target.closest('#open-filters')) { $('#filters').classList.add('is-open'); $('#scrim').classList.add('is-open'); }
-  if (e.target.closest('#apply-mobile') || e.target.id === 'scrim') { $('#filters').classList.remove('is-open'); }
+  if (e.target.closest('#open-filters')) { $('#filters').classList.add('is-open'); $('#scrim').classList.add('is-open'); document.body.classList.add('is-locked'); }
+  if (e.target.closest('#apply-mobile, #close-filters')) { closeDrawer(); if (e.target.closest('#apply-mobile')) scrollTo({ top: $('.toolbar').offsetTop - 70, behavior: 'smooth' }); }
 });
 
 renderFilters(); rangeUI(); render();

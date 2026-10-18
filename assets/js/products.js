@@ -90,7 +90,7 @@ export const PRODUCTS = [
   },
   {
     id: 'starlight-studs', name: 'Starlight Studs', category: 'earrings', price: 65, rating: 4.7, reviews: 689,
-    badge: 'Only a few left', stock: 4, sold: 4320,
+    badge: 'Only a few left', stock: 4, sold: 4320, addon: 45,
     tagline: 'Everyday sparkle, four claws strong.',
     finishes: ['polished', 'brushed'],
     description: '6 mm brilliant-cut lab stones in a four-claw basket with secure butterfly backs. Your new everyday studs.',

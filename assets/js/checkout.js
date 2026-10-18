@@ -1,5 +1,5 @@
 /* Silver Shop — checkout. Demo only: no payment data leaves the browser and nothing is charged. */
-import { boot, $, $$, money2, esc, cart, TAX, ICONS, checkSvg, fmtDate, addBusinessDays, confetti, toast, store } from './app.js';
+import { boot, $, $$, money2, esc, cart, TAX, ICONS, checkSvg, fmtDate, confetti, toast, store, session, account, POINT_VALUE, WELCOME_POINTS, FREE_GIFT, dispatchDate, rewardMeter, gapFillHtml, optsText } from './app.js';
 import { byId, img } from './products.js';
 
 boot({ chrome: false });
@@ -41,7 +41,14 @@ const DEMO_ADDR = {
 };
 const EMAIL_FIX = { 'gmial.com': 'gmail.com', 'gamil.com': 'gmail.com', 'gmai.com': 'gmail.com', 'gmail.co': 'gmail.com', 'hotmial.com': 'hotmail.com', 'hotmal.com': 'hotmail.com', 'yaho.com': 'yahoo.com', 'yahooo.com': 'yahoo.com', 'outlok.com': 'outlook.com', 'icloud.co': 'icloud.com' };
 
-const data = ss.get('data', { email: '', phone: '', news: true, country: 'US', first: '', last: '', address: '', apt: '', city: '', region: '', postal: '', ship: 'standard', wrap: false, giftMsg: '', hidePrices: false, pay: 'card', billingSame: true, bAddress: '', bCity: '', bPostal: '' });
+const data = ss.get('data', { email: '', phone: '', news: true, country: 'US', first: '', last: '', address: '', apt: '', city: '', region: '', postal: '', ship: 'standard', wrap: false, giftMsg: '', hidePrices: false, pay: 'card', billingSame: true, bAddress: '', bCity: '', bPostal: '', usePoints: true, createAcct: false });
+// Signed-in members get their details and default address filled in.
+(function prefill() {
+  const u = account.user; if (!u) return;
+  const a = u.addresses.find((x) => x.default) || u.addresses[0];
+  if (!data.email) Object.assign(data, { email: u.email, first: u.first, last: u.last, phone: data.phone || u.phone || '' });
+  if (a && !data.address) Object.assign(data, { first: a.first, last: a.last, address: a.address, apt: a.apt || '', city: a.city, region: a.region || '', postal: a.postal, country: a.country, phone: a.phone || data.phone });
+})();
 const card = { number: '', name: '', exp: '', cvc: '' };
 let step = ss.get('step', 1), maxStep = ss.get('max', 1);
 const save = () => { ss.set('data', data); ss.set('step', step); ss.set('max', maxStep); };
@@ -75,7 +82,8 @@ function init() {
         <div class="grid" style="gap:12px"><span class="eyebrow" style="text-align:center">Express checkout</span>
           <div class="express-co"><button type="button" class="x1" data-express="wallet">Express Pay</button><button type="button" class="x2" data-express="wallet">Silver Pay</button><button type="button" class="x3" data-express="pay4">Pay in 4</button></div></div>
         <div class="or">or continue below</div>
-        <div class="flex between center"><h3>Contact</h3><span class="muted" style="font-size:13px">Have an account? <a href="#" style="text-decoration:underline" onclick="return false">Log in</a></span></div>
+        <div class="flex between center wrap-f gap-8"><h3>Contact</h3><span class="muted" style="font-size:13px" id="acct-note">${acctNote()}</span></div>
+        ${savedAddrs()}
         ${field('email', 'Email address', { type: 'email', value: data.email, ac: 'email', inputmode: 'email' })}
         <label class="check"><input type="checkbox" id="news" ${data.news ? 'checked' : ''}><span class="box">${checkSvg}</span><span>Email me early access to drops &amp; private sales <span class="muted">(members get 15% off)</span></span></label>
         <h3>Shipping address</h3>
@@ -85,6 +93,9 @@ function init() {
         ${field('apt', 'Apartment, suite, etc. (optional)', { value: data.apt, ac: 'address-line2', req: false })}
         ${addressRow()}
         ${field('phone', 'Phone (optional — for delivery updates)', { type: 'tel', value: data.phone, ac: 'tel', req: false, inputmode: 'tel' })}
+        ${account.user ? '' : `<div class="join-box ${data.createAcct ? 'is-on' : ''}" id="join-box">
+          <label class="check"><input type="checkbox" id="createAcct" ${data.createAcct ? 'checked' : ''}><span class="box">${checkSvg}</span><span><b>Save my details &amp; take $12.50 off now</b><small>Join the Silver Club: ${WELCOME_POINTS} welcome points applied to this order, plus 5% back on it.</small></span></label>
+          <div class="join-pw">${field('acct-pass', 'Create a password (8+ characters)', { type: 'password', ac: 'new-password', req: false })}</div></div>`}
         <div class="co-nav"><a class="back" href="index.html">${ICONS.arrow} Return to shop</a><button class="btn btn-ink btn-lg" type="submit">Continue to shipping</button></div>
       </form>
 
@@ -156,27 +167,44 @@ function init() {
 /* Summary sidebar                                                     */
 /* ------------------------------------------------------------------ */
 let shownTotal = 0;
-function totals() { return cart.totals({ shipping: step >= 2 ? data.ship : null, country: data.country, giftWrap: data.wrap }); }
-const optLine = (i) => [i.finish === 'polished' ? 'Mirror Polished' : i.finish === 'brushed' ? 'Satin Brushed' : 'Oxidized', ...Object.values(i.opts || {}).map((v) => (/^\d+$/.test(v) ? 'Size ' + v : v))].join(' · ');
+function totals() {
+  const pts = account.user && data.usePoints ? account.user.points : 0;
+  return cart.totals({ shipping: step >= 2 ? data.ship : null, country: data.country, giftWrap: data.wrap, points: pts });
+}
+function acctNote() {
+  const u = account.user;
+  return u ? `Signed in as <b style="color:var(--ink)">${esc(u.first)}</b> · <button type="button" class="link-btn" data-co-logout>Not you?</button>`
+    : 'Have an account? <a href="account.html#signin" data-co-login style="text-decoration:underline;color:var(--ink);font-weight:600">Sign in</a>';
+}
+function savedAddrs() {
+  const u = account.user; if (!u || u.addresses.length < 2) return '';
+  return `<div class="saved-addrs" role="radiogroup" aria-label="Saved addresses">${u.addresses.map((a, i) => `<button type="button" class="chip ${a.address === data.address ? 'is-active' : ''}" data-use-addr="${i}">${ICONS.pin.replace('<svg', '<svg width="14" height="14"')} ${esc(a.address)}, ${esc(a.city)}</button>`).join('')}</div>`;
+}
+const optLine = optsText;
 
 function renderSummary() {
   const t = totals();
   const tax = TAX[data.country];
   $('#summary').innerHTML = `
-    <div class="sum-items">${t.lines.map((l) => `<div class="sum-item"><div class="thumb"><img src="${img(l.id)}" alt=""><span class="q">${l.qty}</span></div><div><b>${esc(l.p.name)}</b>${l.addon ? ' <span class="tag tag-silver" style="height:18px;font-size:8px">Deal</span>' : ''}<small>${esc(optLine(l))}${l.engraving ? `<br>Engraved: “${esc(l.engraving)}”` : ''}</small></div><div style="text-align:right;font-weight:600;font-variant-numeric:tabular-nums">${money2(l.total)}${l.compare ? `<small><s>${money2(l.compare * l.qty)}</s></small>` : ''}</div></div>`).join('')}</div>
+    <div class="sum-items">${t.lines.map((l) => `<div class="sum-item"><div class="thumb"><img src="${img(l.id)}" alt=""><span class="q">${l.qty}</span></div><div><b>${esc(l.p.name)}</b>${l.addon ? ' <span class="tag tag-silver" style="height:18px;font-size:8px">Deal</span>' : ''}<small>${esc(optLine(l))}${l.engraving ? `<br>Engraved: “${esc(l.engraving)}”` : ''}</small></div><div style="text-align:right;font-weight:600;font-variant-numeric:tabular-nums">${money2(l.total)}${l.compare ? `<small><s>${money2(l.compare * l.qty)}</s></small>` : ''}</div></div>`).join('')}
+      ${t.freeGift ? `<div class="sum-item"><div class="thumb"><img src="${img('care-kit')}" alt=""><span class="q">1</span></div><div><b>Silver Care Kit</b> <span class="tag tag-ink tag-xs">Free gift</span><small>Unlocked at ${money2(FREE_GIFT)}</small></div><div style="text-align:right;font-weight:600;color:var(--ok)">FREE</div></div>` : ''}</div>
+    ${t.toGift > 0 ? `<div class="co-reward">${rewardMeter(t)}${gapFillHtml(t)}</div>` : ''}
+    ${account.user && account.user.points ? `<label class="points-toggle"><span>${ICONS.sparkle}<span><b>Use ${Math.min(account.user.points, Math.ceil(t.afterDiscount / POINT_VALUE)).toLocaleString()} Silver Points</b><small>${account.user.points.toLocaleString()} available · worth ${money2(account.user.points * POINT_VALUE)}</small></span></span><span class="toggle"><input type="checkbox" id="usePoints" ${data.usePoints ? 'checked' : ''} aria-label="Use Silver Points"><i></i></span></label>` : ''}
+    ${!account.user && data.createAcct ? `<div class="points-line">${ICONS.gift}<span><b>$12.50 Silver Club credit</b> applies when you continue</span></div>` : ''}
     ${t.promo ? `<div class="flex between center"><span class="applied">${ICONS.sparkle.replace('<svg', '<svg width="12" height="12"')} ${t.promo} <button type="button" data-rm-promo aria-label="Remove code">✕</button></span><span class="muted" style="font-size:12px">${esc(PROMO_LABEL(t.promo))}</span></div>` : `<form class="promo-form" id="promo-form"><div class="field"><input id="promo" placeholder=" " autocomplete="off" style="text-transform:uppercase"><label for="promo">Gift card or discount code</label></div><button class="btn btn-silver" type="submit">Apply</button></form>`}
     <div class="promo-msg" id="promo-msg"></div>
     <div class="totals">
       <div class="sum-row"><span>Subtotal · ${cart.count()} item${cart.count() > 1 ? 's' : ''}</span><span>${money2(t.merch)}</span></div>
       ${t.stack ? `<div class="sum-row discount"><span>Stack &amp; Save (${t.stackPct}%)</span><span>−${money2(t.stack)}</span></div>` : ''}
       ${t.promoAmt ? `<div class="sum-row discount"><span>Discount · ${t.promo}</span><span>−${money2(t.promoAmt)}</span></div>` : ''}
+      ${t.pointsAmt ? `<div class="sum-row discount"><span>Silver Points (${t.pointsUsed.toLocaleString()})</span><span>−${money2(t.pointsAmt)}</span></div>` : ''}
       <div class="sum-row"><span>Shipping${t.ship ? ` · ${t.ship.name}` : ''}</span><span>${t.ship ? (t.shipCost ? money2(t.shipCost) : '<b style="color:var(--ok)">FREE</b>') : '<span class="muted">Calculated next</span>'}</span></div>
       ${t.wrap ? `<div class="sum-row"><span>Gift wrap</span><span>${money2(t.wrap)}</span></div>` : ''}
       <div class="sum-row"><span>${tax.label} (${(t.rate * 100).toFixed(t.rate * 100 % 1 ? 2 : 0)}%)${step < 2 ? ' · est.' : ''}</span><span>${step >= 2 ? money2(t.tax) : '<span class="muted">Calculated next</span>'}</span></div>
       <div class="grand"><span style="font-weight:600">Total</span><span><small>USD</small><b id="grand">${money2(shownTotal)}</b></span></div>
     </div>
-    ${t.compareSavings + t.discount + (t.ship && t.ship.price === 0 && t.ship.id === 'standard' ? 8 : 0) > 0 ? `<div class="savings-pill"><span>${ICONS.sparkle.replace('<svg', '<svg width="14" height="14" style="vertical-align:-2px"')} Total savings today</span><span>${money2(t.compareSavings + t.discount + (t.ship && t.ship.price === 0 && t.ship.id === 'standard' ? 8 : 0))}</span></div>` : ''}
-    ${t.toFree > 0 ? `<div class="stack-hint" style="margin:0"><span class="chip-silver">${ICONS.truck.replace('<svg', '<svg width="16" height="16"')}</span><span>Add <b>${money2(t.toFree)}</b> more for <b>free insured shipping</b>. <a href="shop.html?sort=price-asc" style="text-decoration:underline">Shop small gifts</a></span></div>` : ''}
+    ${savings(t) > 0 ? `<div class="savings-pill"><span>${ICONS.sparkle.replace('<svg', '<svg width="14" height="14" style="vertical-align:-2px"')} Total savings today</span><span>${money2(savings(t))}</span></div>` : ''}
+    ${t.earn ? `<div class="earn-note">${account.user ? `You’ll earn <b>${t.earn} Silver Points</b> on this order` : `Members earn <b>${t.earn} points</b> on this order`}</div>` : ''}
     <div class="trust-row"><div>${ICONS.lock}Secure SSL</div><div>${ICONS.return}60-day returns</div><div>${ICONS.shield}Lifetime warranty</div></div>
     <figure style="margin:0;padding:16px;border-radius:14px;background:#fff;border:1px solid var(--line);font-size:13px"><span class="stars" style="--pct:100%"></span><blockquote style="margin:8px 0;color:var(--muted)">“Arrived in two days in the most beautiful box. Even better than the photos.”</blockquote><figcaption style="font-weight:600">— Priya S., verified buyer</figcaption></figure>`;
   const target = step >= 2 ? t.total : t.afterDiscount;
@@ -190,6 +218,7 @@ function renderSummary() {
     if (r.ok) { renderAll(); setMsg(r.msg, true); confetti({ count: 60, x: 0.82, y: 0.4 }); } else { setMsg(r.msg, false); $('#promo').closest('.field').classList.add('is-invalid'); }
   };
 }
+const savings = (t) => t.compareSavings + t.discount + t.pointsAmt + (t.freeGift ? byId['care-kit'].price : 0) + (t.ship && t.ship.price === 0 && t.ship.id === 'standard' ? 8 : 0);
 const PROMO_LABEL = (c) => ({ SILVER10: '10% off', WELCOME15: '15% off', FREESHIP: 'Free express', VIP20: '20% off' }[c] || '');
 function setMsg(m, ok) { const el = $('#promo-msg'); el.textContent = m; el.className = 'promo-msg ' + (ok ? 'ok' : 'bad'); }
 function animateTotal(to) {
@@ -207,10 +236,15 @@ const range = (a, b) => (+a === +b ? fmtDate(a) : `${fmtDate(a)} – ${fmtDate(b
 function renderShipping() {
   const t = totals();
   $('#methods').innerHTML = t.methods.map((m) => `<label class="rc"><input type="radio" name="ship" value="${m.id}" ${m.id === data.ship ? 'checked' : ''}><span class="o"></span><span><strong>${m.name}${m.id === 'express' ? '<span class="pill">Most popular</span>' : ''}</strong><small>Arrives ${range(...m.eta)} · ${m.desc}</small></span><span class="p ${m.price ? '' : 'free'}">${m.price ? money2(m.price) : 'FREE'}</span></label>`).join('');
-  const bumpIdx = cart.items.findIndex((i) => i.id === 'care-kit' && i.addon);
-  const k = byId['care-kit'];
-  $('#bump').innerHTML = `<span class="ribbon">One-time offer</span><label class="check" style="align-self:center"><input type="checkbox" id="bump-cb" ${bumpIdx > -1 ? 'checked' : ''}><span class="box">${checkSvg}</span></label><img src="${img('care-kit')}" alt=""><div><strong>Yes! Add the Silver Care Kit for just ${money2(k.addon)}</strong> <span class="muted" style="text-decoration:line-through;font-size:13px">${money2(k.price)}</span><p>Keep your new pieces mirror-bright for years. Only available at checkout — 53% off.</p></div>`;
+  const k = bumpProduct();
+  const bumpIdx = cart.items.findIndex((i) => i.id === k.id && i.addon);
+  $('#bump').innerHTML = `<span class="ribbon">Checkout only</span><label class="check" style="align-self:center"><input type="checkbox" id="bump-cb" ${bumpIdx > -1 ? 'checked' : ''}><span class="box">${checkSvg}</span></label><img src="${img(k.id)}" alt=""><div><strong>Add ${esc(k.name)} for ${money2(k.addon)}</strong> <span class="muted" style="text-decoration:line-through;font-size:13px">${money2(k.price)}</span><p>${k.id === 'care-kit' ? 'Keeps your new pieces mirror-bright for years.' : 'Everyday sparkle, packed in the same box.'} ${Math.round((1 - k.addon / k.price) * 100)}% off, only here.</p></div>`;
   $('#ship-recap').innerHTML = recapRows(['contact', 'ship']);
+}
+function bumpProduct() {
+  const giftOn = cart.totals().freeGift;
+  const has = (id) => cart.items.some((i) => i.id === id && !i.addon);
+  return byId[!giftOn && !has('care-kit') ? 'care-kit' : has('starlight-studs') ? 'care-kit' : 'starlight-studs'];
 }
 function recapRows(which) {
   const c = TAX[data.country].name;
@@ -278,6 +312,7 @@ function rule(id) {
     case 'cc-cvc': { const b = brand(card.number.replace(/\D/g, '')); return new RegExp(`^\\d{${b.cvc}}$`).test(v) ? '' : `Enter the ${b.cvc}-digit security code`; }
     case 'bAddress': case 'bCity': return v ? '' : 'Required';
     case 'bPostal': return v.length >= 3 ? '' : 'Required';
+    case 'acct-pass': return !data.createAcct || $('#acct-pass').value.length >= 8 ? '' : 'Choose a password with at least 8 characters';
     default: return '';
   }
 }
@@ -293,7 +328,7 @@ function check(id, show = true) {
 }
 function validateStep(n) {
   let ids = [];
-  if (n === 1) ids = ['email', 'first', 'last', 'address', 'city', 'region', 'postal', 'phone'];
+  if (n === 1) ids = ['email', 'first', 'last', 'address', 'city', 'region', 'postal', 'phone', 'acct-pass'];
   if (n === 3 && data.pay === 'card') ids = ['cc-number', 'cc-name', 'cc-exp', 'cc-cvc'];
   if (n === 3 && !data.billingSame) ids.push('bAddress', 'bCity', 'bPostal');
   const bad = ids.filter((id) => $('#' + id) && !check(id));
@@ -355,12 +390,23 @@ function pickSuggestion(btn) {
 /* Events                                                              */
 /* ------------------------------------------------------------------ */
 function bind() {
-  root.addEventListener('submit', (e) => {
+  root.addEventListener('submit', async (e) => {
     e.preventDefault();
     const n = +e.target.dataset.step;
     if (!n) return;
     if (n === 4) return placeOrder();
     if (!validateStep(n)) return;
+    if (n === 1 && data.createAcct && !account.user) {
+      if (account.exists(data.email)) { const f = $('[data-field="email"]'); f.classList.add('is-invalid'); $('.err', f).innerHTML = 'You already have an account. <a href="account.html#signin" data-co-login style="text-decoration:underline;font-weight:600;color:var(--ink)">Sign in</a> to use your points.'; return; }
+      const r = await account.register({ first: data.first, last: data.last, email: data.email, password: $('#acct-pass').value, news: data.news, phone: data.phone });
+      if (r.ok) {
+        account.user.addresses.push({ country: data.country, first: data.first, last: data.last, address: data.address, apt: data.apt, city: data.city, region: data.region, postal: data.postal, phone: data.phone, default: true });
+        account.update({});
+        data.createAcct = false; data.usePoints = true; save();
+        $('#join-box')?.remove(); $('#acct-note').innerHTML = acctNote();
+        toast({ icon: ICONS.gift, html: `<strong>Welcome to the Silver Club, ${esc(data.first)}!</strong> $12.50 is off this order.`, sub: 'Your address is saved for next time', dark: true });
+      }
+    }
     maxStep = Math.max(maxStep, n + 1);
     goTo(n + 1);
   });
@@ -379,6 +425,17 @@ function bind() {
     const ex = e.target.closest('[data-express]');
     if (ex) expressCheckout(ex.dataset.express);
     if (e.target.closest('[data-rm-promo]')) { cart.removePromo(); renderAll(); }
+    if (e.target.closest('[data-co-login]')) session.set('next', 'checkout.html');
+    if (e.target.closest('[data-co-logout]')) { account.logout(); ['email', 'first', 'last', 'address', 'apt', 'city', 'region', 'postal', 'phone'].forEach((k) => (data[k] = '')); save(); location.reload(); }
+    const ua = e.target.closest('[data-use-addr]');
+    if (ua) {
+      const a = account.user.addresses[+ua.dataset.useAddr];
+      Object.assign(data, { first: a.first, last: a.last, address: a.address, apt: a.apt || '', city: a.city, region: a.region || '', postal: a.postal, country: a.country, phone: a.phone || data.phone }); save();
+      ['first', 'last', 'address', 'apt', 'phone'].forEach((id) => { $('#' + id).value = data[id]; });
+      $('#country').value = data.country; $('#addr-row').outerHTML = addressRow();
+      $$('[data-use-addr]').forEach((b) => b.classList.toggle('is-active', b === ua));
+      renderSummary();
+    }
     if (e.target.closest('#sum-toggle')) { const s = $('#co-side'); s.classList.toggle('is-open'); $('#sum-toggle-l').textContent = s.classList.contains('is-open') ? 'Hide order summary' : 'Show order summary'; }
     if (!e.target.closest('#suggest, #address')) $('#suggest')?.classList.remove('is-on');
   });
@@ -436,11 +493,14 @@ function bind() {
     if (t.name === 'ship') { data.ship = t.value; save(); renderSummary(); }
     if (t.id === 'wrap') { data.wrap = t.checked; save(); renderSummary(); }
     if (t.id === 'hidePrices') { data.hidePrices = t.checked; save(); }
+    if (t.id === 'createAcct') { data.createAcct = t.checked; save(); $('#join-box').classList.toggle('is-on', t.checked); if (t.checked) setTimeout(() => $('#acct-pass').focus(), 50); renderSummary(); }
+    if (t.id === 'usePoints') { data.usePoints = t.checked; save(); renderAll(); }
     if (t.id === 'billingSame') { data.billingSame = t.checked; save(); $('#billing').classList.toggle('hide', t.checked); }
     if (t.id === 'terms') { $('#terms-err').style.display = t.checked ? 'none' : 'block'; }
     if (t.id === 'bump-cb') {
-      const idx = cart.items.findIndex((i) => i.id === 'care-kit' && i.addon);
-      if (t.checked && idx < 0) { cart.add({ id: 'care-kit', finish: 'polished', opts: {}, addon: true }); toast({ img: img('care-kit'), html: '<strong>Silver Care Kit</strong> added for $9', sub: 'Saved $10' }); }
+      const k = bumpProduct();
+      const idx = cart.items.findIndex((i) => i.id === k.id && i.addon);
+      if (t.checked && idx < 0) { cart.add({ id: k.id, finish: 'polished', opts: {}, addon: true }); toast({ img: img(k.id), html: `<strong>${esc(k.name)}</strong> added for ${money2(k.addon)}`, sub: `Saved ${money2(k.price - k.addon)}`, timeout: 2600 }); }
       if (!t.checked && idx > -1) cart.remove(idx);
       renderSummary(); renderShipping();
     }
@@ -511,9 +571,16 @@ async function placeOrder() {
   const order = {
     no: 'SS-' + String(Date.now()).slice(-6) + Math.floor(Math.random() * 90 + 10),
     at: Date.now(), data: { ...data }, pay: data.pay === 'card' ? `${brand(card.number.replace(/\D/g, '')).label || 'Card'} •••• ${card.number.replace(/\D/g, '').slice(-4)}` : payLabel(),
-    lines: t.lines.map((l) => ({ id: l.id, name: l.p.name, qty: l.qty, total: l.total, opts: optLine(l), engraving: l.engraving })),
-    totals: { merch: t.merch, discount: t.discount, ship: t.shipCost, shipName: t.ship.name, eta: t.ship.eta.map((d) => +d), wrap: t.wrap, tax: t.tax, total: t.total, savings: t.compareSavings + t.discount },
+    lines: [...t.lines.map((l) => ({ id: l.id, name: l.p.name, qty: l.qty, total: l.total, opts: optLine(l), engraving: l.engraving })), ...(t.freeGift ? [{ id: 'care-kit', name: 'Silver Care Kit (free gift)', qty: 1, total: 0, opts: 'Unlocked at ' + money2(FREE_GIFT) }] : [])],
+    items: cart.items.filter((i) => !i.addon).map((i) => ({ id: i.id, finish: i.finish, opts: i.opts, qty: i.qty, engraving: i.engraving || '' })),
+    totals: { merch: t.merch, discount: t.discount, points: t.pointsAmt, pointsUsed: t.pointsUsed, earn: t.earn, ship: t.shipCost, shipName: t.ship.name, eta: t.ship.eta.map((d) => +d), wrap: t.wrap, tax: t.tax, total: t.total, savings: savings(t) },
   };
+  if (account.user) {
+    if (t.pointsUsed) account.addPoints(-t.pointsUsed, `Redeemed on ${order.no}`);
+    account.addPoints(t.earn, `Earned on ${order.no}`);
+    account.user.orders.unshift(order); account.update({});
+    order.member = true;
+  }
   store.set('lastOrder', order);
   cart.clear();
   ['data', 'step', 'max', 'reserve'].forEach((k) => { try { sessionStorage.removeItem('co:' + k); } catch { /* ignore */ } });
@@ -527,8 +594,8 @@ async function placeOrder() {
 function confirmation(o) {
   const d = o.data;
   const eta = o.totals.eta.map((x) => new Date(x));
-  const now = new Date();
-  const ship = now.getHours() < 15 && now.getDay() % 6 ? now : addBusinessDays(now, 1);
+  const ship = dispatchDate(new Date(o.at));
+  const u = account.user && o.member ? account.user : null;
   history.replaceState(null, '', 'checkout.html?order=' + o.no);
   const inOrder = new Set(o.lines.map((l) => l.id));
   const offer = ['luna-hoops', 'starlight-studs', 'twist-rope', 'cable-chain', 'orbit-beads'].map((x) => byId[x]).find((x) => !inOrder.has(x.id)) || byId['care-kit'];
@@ -563,6 +630,7 @@ function confirmation(o) {
         <div class="totals">
           <div class="sum-row"><span>Subtotal</span><span>${money2(o.totals.merch)}</span></div>
           ${o.totals.discount ? `<div class="sum-row discount"><span>Discounts</span><span>−${money2(o.totals.discount)}</span></div>` : ''}
+          ${o.totals.points ? `<div class="sum-row discount"><span>Silver Points</span><span>−${money2(o.totals.points)}</span></div>` : ''}
           <div class="sum-row"><span>Shipping · ${esc(o.totals.shipName)}</span><span>${o.totals.ship ? money2(o.totals.ship) : 'Free'}</span></div>
           ${o.totals.wrap ? `<div class="sum-row"><span>Gift wrap</span><span>${money2(o.totals.wrap)}</span></div>` : ''}
           <div class="sum-row"><span>Tax</span><span>${money2(o.totals.tax)}</span></div>
@@ -572,7 +640,8 @@ function confirmation(o) {
           <div style="grid-template-columns:90px 1fr"><span>Ship to</span><span>${esc(d.first)} ${esc(d.last)}<br>${esc(d.address)}, ${esc(d.city)} ${esc(d.postal)}<br>${TAX[d.country].name}</span></div>
           <div style="grid-template-columns:90px 1fr"><span>Payment</span><span>${o.pay}</span></div>
         </div>
-        <div class="flex gap-12 wrap-f"><a class="btn btn-ink" href="shop.html">Continue shopping</a><button class="btn btn-ghost" onclick="window.print()">Print receipt</button></div>
+        ${u ? `<div class="points-line">${ICONS.sparkle}<span><b>+${o.totals.earn} Silver Points</b> earned · balance ${u.points.toLocaleString()} (${money2(u.points * POINT_VALUE)})</span></div>` : `<form class="join-after" id="join-after" novalidate><b>Track this order &amp; earn ${o.totals.earn + WELCOME_POINTS} points</b><small>Create a password and we’ll save this order to a new Silver Club account for ${esc(d.email)}.</small><div class="promo-form"><div class="field" data-field="ja-pass"><input id="ja-pass" type="password" placeholder=" " autocomplete="new-password" minlength="8"><label for="ja-pass">Password (8+ characters)</label><span class="err" role="alert"></span></div><button class="btn btn-ink" type="submit">Join</button></div></form>`}
+        <div class="flex gap-12 wrap-f"><a class="btn btn-ink" href="shop.html">Continue shopping</a>${u ? '<a class="btn btn-ghost" href="account.html#orders">View in my account</a>' : ''}</div>
         <p class="muted" style="font-size:12px;margin:0">This is a demo store. No payment was taken and nothing will be shipped.</p>
       </div>
     </div>
@@ -586,14 +655,32 @@ function confirmation(o) {
     const b = e.currentTarget; b.disabled = true; b.innerHTML = '<span class="spinner"></span>';
     setTimeout(() => {
       o.lines.push({ id: offer.id, name: offer.name, qty: 1, total: offerPrice, opts: 'Added after checkout · 25% off' });
+      o.items = [...(o.items || []), { id: offer.id, finish: 'polished', opts: {}, qty: 1 }];
       o.totals.total = Math.round((o.totals.total + offerPrice * (1 + TAX[d.country].rate)) * 100) / 100;
       store.set('lastOrder', o);
+      if (o.member && account.user) { const i = account.user.orders.findIndex((x) => x.no === o.no); if (i > -1) account.user.orders[i] = o; account.addPoints(Math.floor(offerPrice), `Earned on ${o.no}`); }
       $('#conf-items').insertAdjacentHTML('beforeend', `<div class="sum-item" style="animation:itemIn .6s var(--ease-out)"><div class="thumb"><img src="${img(offer.id)}" alt=""><span class="q">1</span></div><div><b>${esc(offer.name)}</b><small>Added after checkout · 25% off</small></div><b>${money2(offerPrice)}</b></div>`);
       $('#conf-total').textContent = money2(o.totals.total);
       b.innerHTML = `${ICONS.check} Added to order ${o.no}`;
       confetti({ count: 80, x: 0.3, y: 0.6 });
       toast({ img: img(offer.id), html: `<strong>${esc(offer.name)}</strong> added to your order`, sub: `Charged ${money2(offerPrice)} + tax to ${o.pay.replace(/<[^>]+>/g, ' ')} (demo)` });
     }, 900);
+  };
+  const ja = $('#join-after');
+  if (ja) ja.onsubmit = async (e) => {
+    e.preventDefault();
+    const pw = $('#ja-pass').value, f = $('[data-field="ja-pass"]');
+    const err = pw.length < 8 ? 'Use at least 8 characters' : account.exists(d.email) ? 'You already have an account — sign in from the account page' : '';
+    f.classList.toggle('is-invalid', !!err); $('.err', f).textContent = err;
+    if (err) return;
+    await account.register({ first: d.first, last: d.last, email: d.email, password: pw, news: d.news, phone: d.phone });
+    const u2 = account.user;
+    u2.addresses.push({ country: d.country, first: d.first, last: d.last, address: d.address, apt: d.apt, city: d.city, region: d.region, postal: d.postal, phone: d.phone, default: true });
+    o.member = true; u2.orders.unshift(o); account.addPoints(o.totals.earn, `Earned on ${o.no}`);
+    store.set('lastOrder', o);
+    confetti({ count: 100 });
+    toast({ icon: ICONS.gift, html: `<strong>Welcome to the Silver Club!</strong> ${(o.totals.earn + WELCOME_POINTS).toLocaleString()} points are in your account.`, sub: 'This order is saved under Orders', dark: true });
+    confirmation(o);
   };
   scrollTo({ top: 0 });
 }

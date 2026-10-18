@@ -1,4 +1,4 @@
-import { boot, $, $$, productCard, bindTilt, mountCountdown, addToCart, countUp, esc, reveal, ICONS, starsHtml } from './app.js';
+import { boot, $, $$, productCard, bindTilt, mountCountdown, addToCart, countUp, esc, reveal, ICONS, money, money2, store, cart, account, POINT_VALUE } from './app.js';
 import { PRODUCTS, CATEGORIES, byId, img, reviewsFor } from './products.js';
 
 boot();
@@ -32,10 +32,10 @@ async function hero() {
       const w = host.clientWidth, h = host.clientHeight;
       renderer.setSize(w, h, false);
       camera.aspect = w / h;
-      const mobile = w < 900;
+      const mobile = innerWidth <= 760;
       base.x = mobile ? 0 : Math.min(1.7, (w / h) * 0.85);
-      base.y = mobile ? 1.55 : 0.25;
-      camera.position.set(0, 0.05, mobile ? 14 : 8.2);
+      base.y = mobile ? -0.1 : 0.25;
+      camera.position.set(0, 0.05, mobile ? 10.5 : 8.2);
       camera.lookAt(0, 0.05, 0);
       camera.updateProjectionMatrix();
     };
@@ -58,7 +58,7 @@ async function hero() {
       const t = clock.getElapsedTime();
       if (!dragging) vel += (0.0035 - vel) * 0.02;
       spin += vel;
-      const sc = Math.min(1, scrollY / innerHeight);
+      const sc = innerWidth <= 760 ? 0 : Math.min(1, scrollY / innerHeight);
       pivot.rotation.y = -0.6 + spin + mx * 0.5;
       pivot.rotation.x = 0.35 + my * 0.35 + sc * 0.8;
       pivot.position.set(base.x, base.y + Math.sin(t * 0.9) * 0.08 + sc * 1.2, 0);
@@ -78,6 +78,18 @@ $('[data-hero-add]').addEventListener('click', (e) => {
   addToCart({ id: 'halo-solitaire', finish: 'polished', opts: { size: '7' } }, $('.hero-product img'));
 });
 $$('[data-count]').forEach((el) => new IntersectionObserver(([en], o) => { if (en.isIntersecting) { countUp(el, +el.dataset.count, { fmt: (v) => Math.round(v / 1000) + 'k+' }); o.disconnect(); } }).observe(el));
+
+/* ---------- Welcome back: recently viewed + saved bag (returning visitors only) ---------- */
+(function welcomeBack() {
+  const recent = store.get('recent', []).filter((id) => byId[id]).slice(0, 4);
+  if (!recent.length && !cart.items.length) return;
+  const u = account.user, t = cart.totals();
+  const el = $('#welcome-back');
+  el.classList.remove('hide');
+  el.innerHTML = `<div class="wb-head"><div><p class="eyebrow">${u ? `Welcome back, ${esc(u.first)}` : 'Welcome back'}</p><h2 class="display h3">Pick up where you left off</h2></div>
+      ${cart.items.length ? `<button class="wb-bag" data-open-bag>${ICONS.bag}<span>Your bag · ${cart.count()} · ${money2(t.afterDiscount)}</span>${ICONS.arrow}</button>` : u?.points ? `<a class="wb-bag" href="shop.html">${ICONS.sparkle}<span>${money2(u.points * POINT_VALUE)} in points to spend</span>${ICONS.arrow}</a>` : ''}</div>
+    <div class="wb-row">${recent.map((id) => { const p = byId[id]; return `<a class="wb-item" href="product.html?id=${id}"><img src="${img(id)}" alt=""><span><b>${esc(p.name)}</b><small>${money(p.price)}${p.compareAt ? ` <s>${money(p.compareAt)}</s>` : ''}${p.stock <= 7 ? ` · <em>${p.stock} left</em>` : ''}</small></span></a>`; }).join('')}</div>`;
+})();
 
 /* ---------- Marquee ---------- */
 const words = ['925 Sterling Silver', 'Hand-polished in seven stages', 'Free engraving on select pieces', 'Lifetime warranty', 'Recycled silver', 'Free 60-day returns', 'Insured worldwide shipping'];
